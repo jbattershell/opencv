@@ -24,6 +24,7 @@ public enum class OCVFilterType
 	eBlur,
 	eFindFeatures,
 	eSepia,
+	eMotion,
 	eNumOCVFilterTypes
 };
 
@@ -82,7 +83,8 @@ private:
     bool m_contentDirty;
     std::shared_ptr<cv::Mat> m_backFrame;
     std::shared_ptr<cv::Mat> m_frontFrame;
-    std::shared_ptr<cv::Mat> m_midFrame;
+    std::shared_ptr<cv::Mat> m_frontMinus1Frame;
+    std::shared_ptr<cv::Mat> m_frontMinus2Frame;
     std::shared_ptr<cv::Mat> m_diffFrame;
     std::mutex m_mutex;
 
@@ -93,7 +95,7 @@ private:
 	CameraCaptureSampleSink* pCameraCaptureSampleSink;
 
 	//void ApplyPreviewFilter(const cv::Mat& image);
-	
+	void Direct3DInterop::diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* t2, cv::Mat* output);
 	void ResetTransparency(cv::Mat* mat);
 	void ApplyGrayFilter(cv::Mat* mat);
 	void ApplyCannyFilter(cv::Mat* mat);

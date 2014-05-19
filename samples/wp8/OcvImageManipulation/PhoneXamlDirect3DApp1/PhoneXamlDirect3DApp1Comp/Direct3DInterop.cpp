@@ -56,7 +56,8 @@ namespace PhoneXamlDirect3DApp1Comp
         , m_contentDirty(false)
         , m_backFrame(nullptr)
         , m_frontFrame(nullptr)
-        , m_midFrame(nullptr)
+        , m_frontMinus1Frame(nullptr)
+        , m_frontMinus2Frame(nullptr)
         , m_diffFrame(nullptr)
     {
     }
@@ -66,8 +67,10 @@ namespace PhoneXamlDirect3DApp1Comp
         std::lock_guard<std::mutex> lock(m_mutex);
         if(m_backFrame != nullptr)
         {
-            std::swap(m_backFrame, m_frontFrame);	//newest data goes to frontFrame
-            std::swap(m_backFrame, m_midFrame);		//older data goes to midFrame
+			
+            std::swap(m_frontMinus2Frame, m_frontMinus1Frame);	//oldest data goes to m_frontMinus2Frame
+            std::swap(m_frontMinus1Frame, m_frontFrame);		//next oldest goes to m_frontMinus1Frame
+            std::swap(m_backFrame, m_frontFrame);				//newest data goes to frontFrame
             return true;
         }
         return false;
@@ -81,7 +84,8 @@ namespace PhoneXamlDirect3DApp1Comp
 			//Only goes in here the first time a frame is passed in.
             m_backFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
-            m_midFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
+            m_frontMinus1Frame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
+            m_frontMinus2Frame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_diffFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
         }
 
@@ -97,7 +101,8 @@ namespace PhoneXamlDirect3DApp1Comp
 			if (m_renderer)
 			{
 				cv::Mat* mat = m_frontFrame.get();	//load in newest data
-				cv::Mat* matOld = m_midFrame.get();	//load in newest data
+				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
+				cv::Mat* matOlder = m_frontMinus2Frame.get();	//load in 2 frame old data
 				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
 				//cv::Mat* matDiff = m_diffFrame.get();
 		
@@ -134,59 +139,35 @@ namespace PhoneXamlDirect3DApp1Comp
 
 					case OCVFilterType::eSepia:
 					{
-						
-						//show differences
-						///////////////////////////////////////////////////
-
-						//cv::Mat matDiff;
-						//matDiff.zeros(mat->size(),mat->type());
-
-						//cvAbsDiff(mat,matOld,&matDiff);	//take difference of past two frames: this one crashes
-						
-						
-						//cv::Mat matDiff(mat->size(),mat->type());
-						//cv::absdiff(*mat,*matOld,matDiff);	//take difference of past two frames: this one only displays variable top sliver
-						
-						
-						
-						//cv::absdiff(*mat,*matOld,*mat);	//take difference of past two frames: this one only displays variable top sliver
-						//matDiff=mat->clone();
-						//matDiff = *mat - *matOld;
-						//std::swap(*mat,matDiff);		//put diff image in mat
-						
-
-						//cv::Mat* matDiff = new cv::Mat;
-						//cvAbsDiff(mat,matOld,matDiff);	//take difference of past two frames: crashes
-						//absdiff(*mat,*matOld,*matDiff);	//take difference of past two frames: this one only displays variable top sliver
-						//*matDiff = *mat - *matOld;
-						//std::swap(*mat,*matDiff);		//put diff image in mat
-						//delete matDiff;
-
-						//////////////////////////////////////////////////////////
-						//ApplySepiaFilter(mat);
+						ApplySepiaFilter(mat);
 						break;
+					}
+					case OCVFilterType::eMotion:
+					{
+						diffImg(matOlder, matOld, mat, matdiff);
+						break;	
 					}
 				}
 				
-				//cv::Mat matDiff(mat->size(),mat->type());
-				//cv::absdiff(*mat,*matOld,matDiff);	//take difference of past two frames
-				//m_renderer->CreateTextureFromByte(matDiff.data, matDiff.cols, matDiff.rows);
-				
-				
-				ApplyGrayFilter(mat);
-				cv::Mat matZero(mat->size(),mat->type());	//all data points should be zero
-				matZero=matZero.zeros(mat->size(),mat->type());
-				//cv::absdiff(*mat,matZero,*matdiff);	
 
-				cv::absdiff(*mat,*matOld,*matdiff);	//take difference of past two frames
-				ResetTransparency(matdiff);
-				m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
-				
-				//cv::cvtColor(*matdiff, *mat, CV_GRAY2BGRA);
-				//m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
+				if(m_algorithm == OCVFilterType::eMotion)
+					m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
+				else
+					m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
 			}
 		}
     }
+
+	void Direct3DInterop::diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* t2, cv::Mat* output)
+	{
+		
+		cv::absdiff(*t0,*t1,*output);	//take difference of past two frames
+		cv::absdiff(*t2,*t1,*t0);	//overwrites t0 (t0 will be overwritten in the next cycle anyway
+
+		cv::bitwise_and(*output,*t0,*output);
+		ResetTransparency(output);
+			
+	}
 
 	void Direct3DInterop::ResetTransparency(cv::Mat* mat){
 		unsigned char *dataptr;
@@ -194,7 +175,7 @@ namespace PhoneXamlDirect3DApp1Comp
 		dataptr = mat->data;
 
 		//transparency is last (4th) byte in each pixel
-		for(int i=3;i<imgBytes;i+=4)
+		for(unsigned int i=3;i<imgBytes;i+=4)
 		{
 			dataptr[i]=255;
 		}

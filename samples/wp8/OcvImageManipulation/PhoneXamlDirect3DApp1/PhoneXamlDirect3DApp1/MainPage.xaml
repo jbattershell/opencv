@@ -23,7 +23,7 @@
                    Checked="RadioButton_Checked"/>
             <RadioButton x:Name="Canny" Content="Canny" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
-            <RadioButton x:Name="Sepia" Content="Sepia" GroupName="Group1" 
+            <RadioButton x:Name="Motion" Content="Motion" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
             <RadioButton x:Name="Features" Content="Features" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>

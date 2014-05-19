@@ -74,8 +74,8 @@ namespace PhoneXamlDirect3DApp1
                     m_d3dInterop.SetAlgorithm(OCVFilterType.eCanny);
                     break;
 
-                case "Sepia":
-                    m_d3dInterop.SetAlgorithm(OCVFilterType.eSepia);
+                case "Motion":
+                    m_d3dInterop.SetAlgorithm(OCVFilterType.eMotion);
                     break;
 
                 case "Features":
