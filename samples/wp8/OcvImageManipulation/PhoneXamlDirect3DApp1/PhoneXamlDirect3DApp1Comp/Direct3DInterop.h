@@ -54,7 +54,7 @@ public:
 		Windows::Foundation::Size get(){ return m_renderResolution; }
 		void set(Windows::Foundation::Size renderResolution);
 	}
-    void SetAlgorithm(OCVFilterType type) { m_algorithm = type; };
+    void SetAlgorithm(OCVFilterType type) { m_algorithm = type; };	//changes which filter is applied
     void UpdateFrame(byte* buffer, int width, int height);
 
 
@@ -82,6 +82,8 @@ private:
     bool m_contentDirty;
     std::shared_ptr<cv::Mat> m_backFrame;
     std::shared_ptr<cv::Mat> m_frontFrame;
+    std::shared_ptr<cv::Mat> m_midFrame;
+    std::shared_ptr<cv::Mat> m_diffFrame;
     std::mutex m_mutex;
 
 	Windows::Phone::Media::Capture::AudioVideoCaptureDevice ^pAudioVideoCaptureDevice;

@@ -5,6 +5,7 @@
 #include <wrl.h>
 #include <robuffer.h>
 #include <opencv2\core\core.hpp>
+#include <opencv2\core\core_c.h>
 #include <opencv2\imgproc\imgproc.hpp>
 #include <opencv2\features2d\features2d.hpp>
 #include <algorithm>
@@ -35,7 +36,8 @@ namespace PhoneXamlDirect3DApp1Comp
 	    BYTE* pixels
 	    )
     {
-        m_Direct3dInterop->UpdateFrame(pixels, width, height);  
+		//passes data from camera to the function that processes and draws
+        m_Direct3dInterop->UpdateFrame(pixels, width, height);		
     }
 
     // Called each time a captured frame is available	
@@ -54,6 +56,8 @@ namespace PhoneXamlDirect3DApp1Comp
         , m_contentDirty(false)
         , m_backFrame(nullptr)
         , m_frontFrame(nullptr)
+        , m_midFrame(nullptr)
+        , m_diffFrame(nullptr)
     {
     }
 
@@ -62,7 +66,8 @@ namespace PhoneXamlDirect3DApp1Comp
         std::lock_guard<std::mutex> lock(m_mutex);
         if(m_backFrame != nullptr)
         {
-            std::swap(m_backFrame, m_frontFrame);
+            std::swap(m_backFrame, m_frontFrame);	//newest data goes to frontFrame
+            std::swap(m_backFrame, m_midFrame);		//older data goes to midFrame
             return true;
         }
         return false;
@@ -73,23 +78,29 @@ namespace PhoneXamlDirect3DApp1Comp
         std::lock_guard<std::mutex> lock(m_mutex);
         if(m_backFrame == nullptr)
         {
+			//Only goes in here the first time a frame is passed in.
             m_backFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
+            m_midFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
+            m_diffFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
         }
 
-        memcpy(m_backFrame.get()->data, buffer, 4 * height*width);
-        m_contentDirty = true;
-        RequestAdditionalFrame();
+        memcpy(m_backFrame.get()->data, buffer, 4 * height*width);	//copies new frame to m_backFrame
+        m_contentDirty = true;	//Marks that m_backFrame holds a new image
+        RequestAdditionalFrame();	//Maybe a feedback mechanism to tell camera to send another frame? Just a guess
     }
 
     void Direct3DInterop::ProcessFrame()
     {
-		if (SwapFrames())
+		if (SwapFrames())	//always returns true unless backframe is a nullptr. Puts most current into frontframe
 		{
 			if (m_renderer)
 			{
-				cv::Mat* mat = m_frontFrame.get();
-				
+				cv::Mat* mat = m_frontFrame.get();	//load in newest data
+				cv::Mat* matOld = m_midFrame.get();	//load in newest data
+				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
+				//cv::Mat* matDiff = m_diffFrame.get();
+		
 				switch (m_algorithm)
 				{
 					case OCVFilterType::ePreview:
@@ -123,12 +134,49 @@ namespace PhoneXamlDirect3DApp1Comp
 
 					case OCVFilterType::eSepia:
 					{
-						ApplySepiaFilter(mat);
+						
+						//show differences
+						///////////////////////////////////////////////////
+
+						//cv::Mat matDiff;
+						//matDiff.zeros(mat->size(),mat->type());
+
+						//cvAbsDiff(mat,matOld,&matDiff);	//take difference of past two frames: this one crashes
+						
+						
+						//cv::Mat matDiff(mat->size(),mat->type());
+						//cv::absdiff(*mat,*matOld,matDiff);	//take difference of past two frames: this one only displays variable top sliver
+						
+						
+						
+						//cv::absdiff(*mat,*matOld,*mat);	//take difference of past two frames: this one only displays variable top sliver
+						//matDiff=mat->clone();
+						//matDiff = *mat - *matOld;
+						//std::swap(*mat,matDiff);		//put diff image in mat
+						
+
+						//cv::Mat* matDiff = new cv::Mat;
+						//cvAbsDiff(mat,matOld,matDiff);	//take difference of past two frames: crashes
+						//absdiff(*mat,*matOld,*matDiff);	//take difference of past two frames: this one only displays variable top sliver
+						//*matDiff = *mat - *matOld;
+						//std::swap(*mat,*matDiff);		//put diff image in mat
+						//delete matDiff;
+
+						//////////////////////////////////////////////////////////
+						//ApplySepiaFilter(mat);
 						break;
 					}
 				}
+				
+				cv::Mat matDiff(mat->size(),mat->type());
+				//cv::absdiff(*mat,*matOld,matDiff);	//take difference of past two frames
+				//m_renderer->CreateTextureFromByte(matDiff.data, matDiff.cols, matDiff.rows);
 
-				m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
+				
+				cv::absdiff(*mat,*matOld,*matdiff);	//take difference of past two frames
+				m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
+
+				//m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
 			}
 		}
     }
@@ -181,7 +229,20 @@ namespace PhoneXamlDirect3DApp1Comp
 		};
 
 		const cv::Mat SepiaKernel(4, 4, CV_32FC1, (void*)SepiaKernelData);
-		cv::transform(*mat, *mat, SepiaKernel);
+		//cv::transform(*mat, *mat, SepiaKernel);
+			
+		////////////////////////////////////
+		//My little blurring function
+		cv::Mat intermediateMat;
+		cv::Size blurSize;
+		blurSize.height=20;
+		blurSize.width=20;
+
+		cv::blur(*mat, intermediateMat, blurSize, cv::Point(-1,-1), 4);	//blur, store result in intermediate
+		std::swap(intermediateMat,*mat);	//move blurred image to displayed image
+		//intermediateMat.copyTo(*mat);
+		///////////////////////////////////////
+		
 	}
 
     IDrawingSurfaceContentProvider^ Direct3DInterop::CreateContentProvider()
@@ -329,8 +390,9 @@ namespace PhoneXamlDirect3DApp1Comp
     HRESULT Direct3DInterop::PrepareResources(_In_ const LARGE_INTEGER* presentTargetTime, _Out_ BOOL* contentDirty)
     {
         *contentDirty = m_contentDirty;
-        if(m_contentDirty)
+        if(m_contentDirty)		
         {
+			//m_backFrame holds a new image, so go process it
             ProcessFrame();
         }
         m_contentDirty = false;
