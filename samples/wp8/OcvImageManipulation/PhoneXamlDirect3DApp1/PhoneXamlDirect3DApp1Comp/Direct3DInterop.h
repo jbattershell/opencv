@@ -93,6 +93,8 @@ private:
 	CameraCaptureSampleSink* pCameraCaptureSampleSink;
 
 	//void ApplyPreviewFilter(const cv::Mat& image);
+	
+	void ResetTransparency(cv::Mat* mat);
 	void ApplyGrayFilter(cv::Mat* mat);
 	void ApplyCannyFilter(cv::Mat* mat);
 	void ApplyBlurFilter(cv::Mat* mat);

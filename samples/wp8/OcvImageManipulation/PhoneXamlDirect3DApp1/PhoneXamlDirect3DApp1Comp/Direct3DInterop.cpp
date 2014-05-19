@@ -173,19 +173,35 @@ namespace PhoneXamlDirect3DApp1Comp
 				//m_renderer->CreateTextureFromByte(matDiff.data, matDiff.cols, matDiff.rows);
 				
 				
-				//ApplyGrayFilter(mat);
+				ApplyGrayFilter(mat);
 				cv::Mat matZero(mat->size(),mat->type());	//all data points should be zero
 				matZero=matZero.zeros(mat->size(),mat->type());
-				//cv::absdiff(*mat,matZero,*matdiff);	//inverted image
-				cv::absdiff(matZero,*mat,*matdiff);	//inverted too?
+				//cv::absdiff(*mat,matZero,*matdiff);	
 
-				//cv::absdiff(*mat,*matOld,*matdiff);	//take difference of past two frames
+				cv::absdiff(*mat,*matOld,*matdiff);	//take difference of past two frames
+				ResetTransparency(matdiff);
 				m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
-
+				
+				//cv::cvtColor(*matdiff, *mat, CV_GRAY2BGRA);
 				//m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
 			}
 		}
     }
+
+	void Direct3DInterop::ResetTransparency(cv::Mat* mat){
+		unsigned char *dataptr;
+		unsigned int imgBytes = 4 * mat->rows * mat->cols;
+		dataptr = mat->data;
+
+		//transparency is last (4th) byte in each pixel
+		for(int i=3;i<imgBytes;i+=4)
+		{
+			dataptr[i]=255;
+		}
+
+		return;
+	}
+
 
 	void Direct3DInterop::ApplyGrayFilter(cv::Mat* mat)
 	{
