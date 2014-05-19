@@ -168,12 +168,18 @@ namespace PhoneXamlDirect3DApp1Comp
 					}
 				}
 				
-				cv::Mat matDiff(mat->size(),mat->type());
+				//cv::Mat matDiff(mat->size(),mat->type());
 				//cv::absdiff(*mat,*matOld,matDiff);	//take difference of past two frames
 				//m_renderer->CreateTextureFromByte(matDiff.data, matDiff.cols, matDiff.rows);
-
 				
-				cv::absdiff(*mat,*matOld,*matdiff);	//take difference of past two frames
+				
+				//ApplyGrayFilter(mat);
+				cv::Mat matZero(mat->size(),mat->type());	//all data points should be zero
+				matZero=matZero.zeros(mat->size(),mat->type());
+				//cv::absdiff(*mat,matZero,*matdiff);	//inverted image
+				cv::absdiff(matZero,*mat,*matdiff);	//inverted too?
+
+				//cv::absdiff(*mat,*matOld,*matdiff);	//take difference of past two frames
 				m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
 
 				//m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
