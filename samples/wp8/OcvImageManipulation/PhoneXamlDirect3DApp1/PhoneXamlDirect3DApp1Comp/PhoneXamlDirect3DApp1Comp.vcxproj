@@ -145,6 +145,7 @@
     <ClInclude Include="DirectXHelper.h" />
     <ClInclude Include="Direct3DBase.h" />
     <ClInclude Include="Direct3DContentProvider.h" />
+    <ClInclude Include="Frame.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="QuadRenderer.h" />
   </ItemGroup>

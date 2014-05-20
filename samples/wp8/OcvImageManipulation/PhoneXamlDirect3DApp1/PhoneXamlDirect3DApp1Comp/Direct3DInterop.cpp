@@ -9,6 +9,7 @@
 #include <opencv2\imgproc\imgproc.hpp>
 #include <opencv2\features2d\features2d.hpp>
 #include <algorithm>
+#include "Frame.h"
 
 using namespace Windows::Storage::Streams;
 using namespace Microsoft::WRL;
@@ -162,23 +163,35 @@ namespace PhoneXamlDirect3DApp1Comp
 	{
 		
 		cv::absdiff(*t0,*t1,*output);	//take difference of past two frames
-		cv::absdiff(*t2,*t1,*t0);	//overwrites t0 (t0 will be overwritten in the next cycle anyway
+		cv::absdiff(*t2,*t1,*t0);	//overwrites t0 (t0 will be overwritten in the next cycle anyway)
 
 		cv::bitwise_and(*output,*t0,*output);
-		ResetTransparency(output);
+		ResetTransparency(output);	//only needed when I want to visualize the result
 			
 	}
 
 	void Direct3DInterop::ResetTransparency(cv::Mat* mat){
+		//for pointer method
 		unsigned char *dataptr;
 		unsigned int imgBytes = 4 * mat->rows * mat->cols;
+
+		//for frame method
+		Frame f = Frame(mat->cols, mat->rows, (uintptr_t)mat->data);
+		unsigned int pixels = f.height() * f.width();
+		
 		dataptr = mat->data;
 
-		//transparency is last (4th) byte in each pixel
-		for(unsigned int i=3;i<imgBytes;i+=4)
+		for(unsigned int y=0; y<f.height();y++)
 		{
-			dataptr[i]=255;
+			for(unsigned int x=0; x<f.width();x++)
+			f(x,y).alpha = 255;
 		}
+
+		////transparency is last (4th) byte in each pixel
+		//for(unsigned int i=3;i<imgBytes;i+=4)
+		//{
+		//	dataptr[i]=255;
+		//}
 
 		return;
 	}
@@ -318,7 +331,7 @@ namespace PhoneXamlDirect3DApp1Comp
 
 				    // Save the reference to the opened video capture device
 				    pAudioVideoCaptureDevice = captureDevice;
-
+	
 				    // Retrieve the native ICameraCaptureDeviceNative interface from the managed video capture device
 				    ICameraCaptureDeviceNative *iCameraCaptureDeviceNative = NULL; 
 				    HRESULT hr = reinterpret_cast<IUnknown*>(captureDevice)->QueryInterface(__uuidof(ICameraCaptureDeviceNative), (void**) &iCameraCaptureDeviceNative);
