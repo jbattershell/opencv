@@ -145,7 +145,39 @@ namespace PhoneXamlDirect3DApp1Comp
 					}
 					case OCVFilterType::eMotion:
 					{
+						ApplyGrayFilter(mat);
 						diffImg(matOlder, matOld, mat, matdiff);
+
+						const int bins = 10;
+						float binvals[bins];
+						GetHist(matdiff,bins,binvals);
+						int i=0;
+
+					//	int dims = 1;
+					//	const int histSize = 10;
+					//	cv::Mat hist = cv::Mat(dims,histSize,CV_8UC4);
+					//	int nimages = 1;
+					//	const int channels = 0;
+					//	const float varranges[] = {0, 256};
+					//	const float* ranges = varranges;
+					//	
+
+					//		cv::calcHist(matdiff, nimages, &channels,
+					//			cv::Mat(), hist, dims, &histSize,
+     //              &ranges, true, false );
+
+
+
+					//float binvals[histSize];
+					//for (int i=0; i<histSize;i++)
+					//{
+					//	binvals[i]=hist.at<float>(i);
+					//}
+
+				   //cv::calcHist( const Mat* images, int nimages, const int* channels,
+       //            InputArray _mask, OutputArray _hist, int dims, const int* histSize,
+       //            const float** ranges, bool uniform, bool accumulate )
+
 						break;	
 					}
 				}
@@ -158,6 +190,28 @@ namespace PhoneXamlDirect3DApp1Comp
 			}
 		}
     }
+
+	void GetHist(cv::Mat* image, int bins, float binvals[])
+	{
+		int dims = 1;
+		const int histSize = 10;
+		cv::Mat hist = cv::Mat(dims,histSize,CV_8UC4);
+		int nimages = 1;
+		const int channels = 0;
+		const float varranges[] = {0, 256};
+		const float* ranges = varranges;
+						
+
+			cv::calcHist(image, nimages, &channels,
+				cv::Mat(), hist, dims, &histSize,
+		&ranges, true, false );
+
+		//put results into array
+		for (int i=0; i<histSize;i++)
+		{
+			binvals[i]=hist.at<float>(i);
+		}
+	}
 
 	void Direct3DInterop::diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* t2, cv::Mat* output)
 	{

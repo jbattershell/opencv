@@ -101,9 +101,10 @@ private:
 	void ApplyCannyFilter(cv::Mat* mat);
 	void ApplyBlurFilter(cv::Mat* mat);
 	void ApplyFindFeaturesFilter(cv::Mat* mat);
-	void ApplySepiaFilter(cv::Mat* mat);
+	void ApplySepiaFilter(cv::Mat* mat); 
 };
 
+	void GetHist(cv::Mat* image, int bins, float binvals[]);
 class CameraCapturePreviewSink :
 	public Microsoft::WRL::RuntimeClass<
 		Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::RuntimeClassType::ClassicCom>,
