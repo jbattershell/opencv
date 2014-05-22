@@ -191,7 +191,7 @@ namespace PhoneXamlDirect3DApp1Comp
 		}
     }
 
-	void GetHist(cv::Mat* image, int bins, float binvals[])
+	void Direct3DInterop::GetHist(cv::Mat* image, int bins, float binvals[])
 	{
 		int dims = 1;
 		const int histSize = 10;
