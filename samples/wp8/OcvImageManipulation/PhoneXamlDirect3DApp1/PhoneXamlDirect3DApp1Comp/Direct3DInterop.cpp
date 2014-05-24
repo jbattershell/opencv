@@ -21,6 +21,7 @@ using namespace Windows::Phone::Input::Interop;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Phone::Media::Capture;
+using namespace cv;
 
 #if !defined(_M_ARM)
 #pragma message("warning: Direct3DInterop.cpp: Windows Phone camera code does not run in the emulator.")
@@ -152,6 +153,12 @@ namespace PhoneXamlDirect3DApp1Comp
 						float binvals[bins];
 						GetHist(matdiff,bins,binvals);
 						int i=0;
+
+						Mat element = getStructuringElement( MORPH_RECT,
+                                     cv::Size( 3,3 ));
+
+						erode(*matdiff,*matOlder,element);
+						threshold(*matdiff,*matdiff,100,255,THRESH_BINARY);
 
 					//	int dims = 1;
 					//	const int histSize = 10;
@@ -369,7 +376,7 @@ namespace PhoneXamlDirect3DApp1Comp
     void Direct3DInterop::StartCamera()
     {
         // Set the capture dimensions
-	    Size captureDimensions;
+	    Windows::Foundation::Size captureDimensions;
 	    captureDimensions.Width = 640;
 	    captureDimensions.Height = 480;		
 
@@ -396,7 +403,7 @@ namespace PhoneXamlDirect3DApp1Comp
 				    // Initialize the preview dimensions (see the accompanying article at )
 				    // The aspect ratio of the capture and preview resolution must be equal,
 				    // 4:3 for capture => 4:3 for preview, and 16:9 for capture => 16:9 for preview.
-				    Size previewDimensions;
+				    Windows::Foundation::Size previewDimensions;
 				    previewDimensions.Width = 640;
 				    previewDimensions.Height = 480;					
 
