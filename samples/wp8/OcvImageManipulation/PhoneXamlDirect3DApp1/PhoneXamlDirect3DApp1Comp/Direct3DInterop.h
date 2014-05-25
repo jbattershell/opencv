@@ -33,6 +33,7 @@ class CameraCaptureSampleSink;
 
 public delegate void RequestAdditionalFrameHandler();
 public delegate void RecreateSynchronizedTextureHandler();
+public delegate void CaptureFrameReadyEvent(const Platform::Array<int>^ data, int cols, int rows);
 
 [Windows::Foundation::Metadata::WebHostHidden]
 public ref class Direct3DInterop sealed : public Windows::Phone::Input::Interop::IDrawingSurfaceManipulationHandler
@@ -57,7 +58,10 @@ public:
 	}
     void SetAlgorithm(OCVFilterType type) { m_algorithm = type; };	//changes which filter is applied
     void UpdateFrame(byte* buffer, int width, int height);
-
+	
+	event CaptureFrameReadyEvent^ OnCaptureFrameReady;
+	void SetCapture();
+	void ResetCapture();
 
 protected:
 	// Event Handlers
@@ -81,6 +85,7 @@ private:
 	Windows::Foundation::Size m_renderResolution;
     OCVFilterType m_algorithm;
     bool m_contentDirty;
+	bool m_captureFrame;
     std::shared_ptr<cv::Mat> m_backFrame;
     std::shared_ptr<cv::Mat> m_frontFrame;
     std::shared_ptr<cv::Mat> m_frontMinus1Frame;

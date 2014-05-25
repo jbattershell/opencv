@@ -56,6 +56,7 @@ namespace PhoneXamlDirect3DApp1Comp
     Direct3DInterop::Direct3DInterop() 
         : m_algorithm(OCVFilterType::ePreview)
         , m_contentDirty(false)
+		, m_captureFrame(false)
         , m_backFrame(nullptr)
         , m_frontFrame(nullptr)
         , m_frontMinus1Frame(nullptr)
@@ -135,7 +136,8 @@ namespace PhoneXamlDirect3DApp1Comp
 
 					case OCVFilterType::eFindFeatures:
 					{
-						ApplyFindFeaturesFilter(mat);
+						m_captureFrame = true;	//temporarily hijacking this function
+						//ApplyFindFeaturesFilter(mat);
 						break;
 					}
 
@@ -194,9 +196,23 @@ namespace PhoneXamlDirect3DApp1Comp
 					m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
 				else
 					m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
+
+				if (m_captureFrame)
+				{
+					auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+
+					this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+					m_captureFrame = false;
+				}
 			}
 		}
     }
+
+	
+        void Direct3DInterop::SetCapture()
+        {m_captureFrame=true;}
+        void Direct3DInterop::ResetCapture()
+        {m_captureFrame=false;}
 
 	void Direct3DInterop::GetHist(cv::Mat* image, int bins, float binvals[])
 	{

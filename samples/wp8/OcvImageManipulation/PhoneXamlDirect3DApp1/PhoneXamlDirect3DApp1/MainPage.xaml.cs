@@ -24,6 +24,7 @@ namespace PhoneXamlDirect3DApp1
     {
         private Direct3DInterop m_d3dInterop = new Direct3DInterop();
         private DispatcherTimer m_timer;
+        MediaLibrary library = new MediaLibrary();
 
         // Constructor
         public MainPage()
@@ -55,6 +56,26 @@ namespace PhoneXamlDirect3DApp1
             // Hook-up native component to DrawingSurface
             DrawingSurface.SetContentProvider(m_d3dInterop.CreateContentProvider());
             DrawingSurface.SetManipulationHandler(m_d3dInterop);
+
+            //Hookup capture frame
+            m_d3dInterop.OnCaptureFrameReady += m_d3dInterop_OnCaptureFrameReady;
+        }
+
+        void m_d3dInterop_OnCaptureFrameReady(int[] data, int cols, int rows)
+        {
+            
+            Dispatcher.BeginInvoke(() =>
+            {
+                WriteableBitmap wb = new WriteableBitmap(cols, rows);
+                Array.Copy(data, wb.Pixels, data.Length);
+
+                var fileStream = new MemoryStream();
+                wb.SaveJpeg(fileStream, wb.PixelWidth, wb.PixelHeight, 100, 100);
+                fileStream.Seek(0, SeekOrigin.Begin);
+
+                library.SavePictureToCameraRoll("finalpicture", fileStream);
+            });
+
         }
 
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
@@ -79,7 +100,8 @@ namespace PhoneXamlDirect3DApp1
                     break;
 
                 case "Features":
-                    m_d3dInterop.SetAlgorithm(OCVFilterType.eFindFeatures);
+                    //m_d3dInterop.SetAlgorithm(OCVFilterType.eFindFeatures);
+                    m_d3dInterop.SetCapture();
                     break;
             }
         }
