@@ -64,6 +64,8 @@ namespace PhoneXamlDirect3DApp1Comp
         , m_frontMinus2Frame(nullptr)
         , m_diffFrame(nullptr)
     {
+		imageThreshold = 300000;
+		pixelThreshold = 40;
     }
 
     bool Direct3DInterop::SwapFrames()
@@ -163,7 +165,7 @@ namespace PhoneXamlDirect3DApp1Comp
 						//bottombins = binvals[0] + binvals[1] + binvals[2] + binvals[3];
 						bottombins = binvals[0];
 
-						if (bottombins > 300000)
+						if (bottombins > imageThreshold)
 						{motionDetected=false;}
 						else
 						{
@@ -180,11 +182,10 @@ namespace PhoneXamlDirect3DApp1Comp
 						}
 						int i=0;
 
-						Mat element = getStructuringElement( MORPH_RECT,
-                                     cv::Size( 3,3 ));
+						//Mat element = getStructuringElement( MORPH_RECT, cv::Size( 3,3 ));
+						//erode(*matdiff,*matOlder,element);
 
-						erode(*matdiff,*matOlder,element);
-						threshold(*matdiff,*matdiff,20,255,THRESH_BINARY);
+						threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
 
 					//	int dims = 1;
 					//	const int histSize = 10;
@@ -234,15 +235,21 @@ namespace PhoneXamlDirect3DApp1Comp
 
 	
     void Direct3DInterop::SetCapture()
-    {m_captureFrame=true;}
+    {this->m_captureFrame=true;}
     void Direct3DInterop::ResetCapture()
-    {m_captureFrame=false;}
+    {this->m_captureFrame=false;}
 
 	
 	bool Direct3DInterop::MotionStatus()
-	{return motionDetected;}
+	{return this->motionDetected;}
 	float Direct3DInterop::LowMotionBins()
-	{return bottombins;}
+	{return this->bottombins;}
+
+	
+	void Direct3DInterop::SetPixelThreshold(int thresh)
+	{this->pixelThreshold=thresh;}
+	void Direct3DInterop::SetImageThreshold(int thresh)
+	{this->imageThreshold=thresh;}
 
 	void Direct3DInterop::GetHist(cv::Mat* image, int bins, float binvals[])
 	{

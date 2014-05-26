@@ -64,6 +64,8 @@ public:
 	void ResetCapture();
 	bool MotionStatus();
 	float LowMotionBins();
+	void SetPixelThreshold(int thresh);
+	void SetImageThreshold(int thresh);
 
 protected:
 	// Event Handlers
@@ -97,6 +99,9 @@ private:
     std::shared_ptr<cv::Mat> m_frontMinus2Frame;
     std::shared_ptr<cv::Mat> m_diffFrame;
     std::mutex m_mutex;
+
+	int pixelThreshold;
+	int imageThreshold;
 
 	Windows::Phone::Media::Capture::AudioVideoCaptureDevice ^pAudioVideoCaptureDevice;
 	ICameraCaptureDeviceNative* pCameraCaptureDeviceNative;

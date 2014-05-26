@@ -123,6 +123,40 @@ namespace PhoneXamlDirect3DApp1
             {
                 MemoryTextBlock.Text = ex.Message;
             }
+
+            if (ImageThresh != null)
+            {
+                ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
+
+            }
+            if (PixelThresh != null)
+            {
+                PixelThresVal.Text = ((int)PixelThresh.Value).ToString();
+
+            }
+        }
+
+        //worked well in baby room
+        //pixel=30
+        //image=304500
+
+        private void ImageThresh_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (ImageThresh != null)
+            {
+                m_d3dInterop.SetImageThreshold((int)ImageThresh.Value);
+                ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
+            }
+        }
+
+        private void PixelThresh_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (PixelThresh != null)
+            {
+                m_d3dInterop.SetPixelThreshold((int)PixelThresh.Value);
+                PixelThresVal.Text = ((int)PixelThresh.Value).ToString();
+
+            }
         }
     }       
 }
