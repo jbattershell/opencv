@@ -102,7 +102,8 @@ namespace PhoneXamlDirect3DApp1
                     break;
 
                 case "Canny":
-                    m_d3dInterop.SetAlgorithm(OCVFilterType.eCanny);
+                    //m_d3dInterop.SetAlgorithm(OCVFilterType.eCanny);
+                    m_d3dInterop.SetBackground();
                     break;
 
                 case "Motion":

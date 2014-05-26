@@ -66,6 +66,7 @@ public:
 	float LowMotionBins();
 	void SetPixelThreshold(int thresh);
 	void SetImageThreshold(int thresh);
+	void SetBackground();
 
 protected:
 	// Event Handlers
@@ -89,6 +90,7 @@ private:
 	Windows::Foundation::Size m_renderResolution;
     OCVFilterType m_algorithm;
     bool m_contentDirty;
+    bool m_getBackground;
 	bool m_captureFrame;
 	bool motionDetected;
 	float bottombins;
@@ -98,6 +100,7 @@ private:
     std::shared_ptr<cv::Mat> m_frontMinus1Frame;
     std::shared_ptr<cv::Mat> m_frontMinus2Frame;
     std::shared_ptr<cv::Mat> m_diffFrame;
+	std::shared_ptr<cv::Mat> m_backgroundFrame;
     std::mutex m_mutex;
 
 	int pixelThreshold;

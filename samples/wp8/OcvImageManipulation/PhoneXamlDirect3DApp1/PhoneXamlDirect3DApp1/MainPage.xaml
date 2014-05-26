@@ -21,7 +21,7 @@
                    Checked="RadioButton_Checked" IsChecked="True"/>
             <RadioButton x:Name="Gray" Content="Gray" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
-            <RadioButton x:Name="Canny" Content="Canny" GroupName="Group1" 
+            <RadioButton x:Name="Canny" Content="Set Background Image" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
             <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>

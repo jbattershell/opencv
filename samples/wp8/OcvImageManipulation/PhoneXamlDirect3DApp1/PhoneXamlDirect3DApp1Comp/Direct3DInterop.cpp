@@ -56,6 +56,7 @@ namespace PhoneXamlDirect3DApp1Comp
     Direct3DInterop::Direct3DInterop() 
         : m_algorithm(OCVFilterType::ePreview)
         , m_contentDirty(false)
+		, m_getBackground(false)
 		, m_captureFrame(false)
 		, motionDetected(false)
         , m_backFrame(nullptr)
@@ -94,6 +95,7 @@ namespace PhoneXamlDirect3DApp1Comp
             m_frontMinus1Frame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontMinus2Frame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_diffFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
+            m_backgroundFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
         }
 
         memcpy(m_backFrame.get()->data, buffer, 4 * height*width);	//copies new frame to m_backFrame
@@ -112,52 +114,59 @@ namespace PhoneXamlDirect3DApp1Comp
 				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
 				cv::Mat* matOlder = m_frontMinus2Frame.get();	//load in 2 frame old data
 				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
+				cv::Mat* matback = m_backgroundFrame.get();	//load in newest data
 				//cv::Mat* matDiff = m_diffFrame.get();
 		
-				m_algorithm = OCVFilterType::eMotion;
-				switch (m_algorithm)
-				{
-					case OCVFilterType::ePreview:
-					{
-						break;
-					}
+				//m_algorithm = OCVFilterType::eMotion;
+				//switch (m_algorithm)
+				//{
+				//	case OCVFilterType::ePreview:
+				//	{
+				//		break;
+				//	}
 
-					case OCVFilterType::eGray:
-					{
-						ApplyGrayFilter(mat);
-						break;
-					}
+				//	case OCVFilterType::eGray:
+				//	{
+				//		ApplyGrayFilter(mat);
+				//		break;
+				//	}
 
-					case OCVFilterType::eCanny:
-					{
-						ApplyCannyFilter(mat);
-						break;
-					}
+				//	case OCVFilterType::eCanny:
+				//	{
+				//		ApplyCannyFilter(mat);
+				//		break;
+				//	}
 
-					case OCVFilterType::eBlur:
-					{
-						ApplyBlurFilter(mat);
-						break;
-					}
+				//	case OCVFilterType::eBlur:
+				//	{
+				//		ApplyBlurFilter(mat);
+				//		break;
+				//	}
 
-					case OCVFilterType::eFindFeatures:
-					{
-						m_captureFrame = true;	//temporarily hijacking this function
-						//ApplyFindFeaturesFilter(mat);
-						break;
-					}
+				//	case OCVFilterType::eFindFeatures:
+				//	{
+				//		m_captureFrame = true;	//temporarily hijacking this function
+				//		//ApplyFindFeaturesFilter(mat);
+				//		break;
+				//	}
 
-					case OCVFilterType::eSepia:
-					{
-						ApplySepiaFilter(mat);
-						break;
-					}
-					case OCVFilterType::eMotion:
-					{
+				//	case OCVFilterType::eSepia:
+				//	{
+				//		ApplySepiaFilter(mat);
+				//		break;
+				//	}
+				//	case OCVFilterType::eMotion:
+				//	{
 						memcpy(matorig->data, mat->data, 4*mat->cols * mat->rows);
 						ApplyGrayFilter(mat);
+						if(m_getBackground)
+						{
+							memcpy(matback->data, mat->data, 4*mat->cols * mat->rows);
+							m_getBackground = false;
+						}
 						//ApplyBlurFilter(mat);
-						diffImg(matOlder, matOld, mat, matdiff);
+						//diffImg(matOlder, matOld, mat, matdiff);	//looks for motion in the last three frames
+						diffImg(matOld, matback, mat, matdiff);	//looks for motion vs background frame
 
 						const int bins = 15;
 						//const int bins = 255/pixelThreshold;
@@ -186,15 +195,15 @@ namespace PhoneXamlDirect3DApp1Comp
 
 						threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
 
-						break;	
-					}
-				}
+				//		break;	
+				//	}
+				//}
 				
 
-				if(m_algorithm == OCVFilterType::eMotion)
+				//if(m_algorithm == OCVFilterType::eMotion)
 					m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
-				else
-					m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
+				//else
+				//	m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
 
 				//if (m_captureFrame)
 				//{
@@ -246,13 +255,18 @@ namespace PhoneXamlDirect3DApp1Comp
 		}
 	}
 
+	//Computes abs(t0-t1) & abs(t2-t1)
 	void Direct3DInterop::diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* t2, cv::Mat* output)
 	{
-		
+		//cv::Mat intermediateMat();
 		cv::absdiff(*t0,*t1,*output);	//take difference of past two frames
-		cv::absdiff(*t2,*t1,*t0);	//overwrites t0 (t0 will be overwritten in the next cycle anyway)
 
+		//cv::absdiff(*t2,*t1,intermediateMat);	
+		//cv::bitwise_and(*output,intermediateMat,*output);
+
+		cv::absdiff(*t2,*t1,*t0);	//overwrites t0 (t0 will be overwritten in the next cycle anyway)
 		cv::bitwise_and(*output,*t0,*output);
+
 		ResetTransparency(output);	//only needed when I want to visualize the result
 			
 	}
@@ -283,6 +297,10 @@ namespace PhoneXamlDirect3DApp1Comp
 		return;
 	}
 
+	void Direct3DInterop::SetBackground()
+	{
+		m_getBackground = true;
+	}
 
 	void Direct3DInterop::ApplyGrayFilter(cv::Mat* mat)
 	{

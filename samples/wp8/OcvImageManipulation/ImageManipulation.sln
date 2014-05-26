@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio Express 2012 for Windows Phone
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PhoneXamlDirect3DApp1Comp", "PhoneXamlDirect3DApp1\PhoneXamlDirect3DApp1Comp\PhoneXamlDirect3DApp1Comp.vcxproj", "{C0F94AFA-466F-4FC4-B5C1-6CD955F3FF88}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "..\..\..\binWP8\3rdparty\zlib\zlib.vcxproj", "{EDF38E37-3312-47CE-B8AC-AACE2073AFC6}"
