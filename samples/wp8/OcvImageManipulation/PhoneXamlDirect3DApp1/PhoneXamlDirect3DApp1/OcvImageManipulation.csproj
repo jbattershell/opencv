@@ -117,6 +117,8 @@
   <ItemGroup>
     <None Include="OcvImageManipulation_2014_05_21_23_54_26.sap" />
     <None Include="OcvImageManipulation_2014_05_25_17_54_37.sap" />
+    <None Include="OcvImageManipulation_2014_05_25_23_05_17.sap" />
+    <None Include="OcvImageManipulation_2014_05_26_10_12_16.sap" />
     <None Include="Properties\AppManifest.xml" />
     <None Include="Properties\WMAppManifest.xml">
       <SubType>Designer</SubType>

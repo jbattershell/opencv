@@ -25,15 +25,18 @@ namespace PhoneXamlDirect3DApp1
         private Direct3DInterop m_d3dInterop = new Direct3DInterop();
         private DispatcherTimer m_timer;
         MediaLibrary library = new MediaLibrary();
+        private bool motionCaptureEnabled;
 
         // Constructor
         public MainPage()
         {
             InitializeComponent();
             m_timer = new DispatcherTimer();
-            m_timer.Interval = new TimeSpan(0, 0, 1);
+            m_timer.Interval = new TimeSpan(0, 0, 0, 0, 250);   //trigger timer up to 4x per second
             m_timer.Tick += new EventHandler(timer_Tick);
             m_timer.Start();
+
+            motionCaptureEnabled = false;
         }
 
         private void DrawingSurface_Loaded(object sender, RoutedEventArgs e)
@@ -64,6 +67,7 @@ namespace PhoneXamlDirect3DApp1
         void m_d3dInterop_OnCaptureFrameReady(int[] data, int cols, int rows)
         {
             
+            m_d3dInterop.ResetCapture();
             Dispatcher.BeginInvoke(() =>
             {
                 WriteableBitmap wb = new WriteableBitmap(cols, rows);
@@ -73,7 +77,13 @@ namespace PhoneXamlDirect3DApp1
                 wb.SaveJpeg(fileStream, wb.PixelWidth, wb.PixelHeight, 100, 100);
                 fileStream.Seek(0, SeekOrigin.Begin);
 
-                library.SavePictureToCameraRoll("finalpicture", fileStream);
+                //DateTime now = DateTime.Now;
+
+                string name = "motion "+ DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff");
+
+               // string name = "Motion at " + now.Year.ToString() + "-" + now.Month.ToString() + "-" + now.Day.ToString() + " " + now.Hour.ToString() + "." + now.Minute.ToString() + "." + now.Second.ToString() + "." + now.Millisecond.ToString();
+
+                library.SavePictureToCameraRoll(name, fileStream);
             });
 
         }
@@ -97,12 +107,12 @@ namespace PhoneXamlDirect3DApp1
 
                 case "Motion":
                     //m_d3dInterop.SetAlgorithm(OCVFilterType.eMotion);
-                    m_d3dInterop.SetCapture();
+                    motionCaptureEnabled = true;
                     break;
 
                 case "Features":
                     //m_d3dInterop.SetAlgorithm(OCVFilterType.eFindFeatures);
-                    m_d3dInterop.ResetCapture();
+                    motionCaptureEnabled = false;
                     break;
             }
         }
@@ -124,15 +134,21 @@ namespace PhoneXamlDirect3DApp1
                 MemoryTextBlock.Text = ex.Message;
             }
 
-            if (ImageThresh != null)
+            if (ImageThresh != null)    //update text
             {
                 ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
 
             }
-            if (PixelThresh != null)
+
+            if (PixelThresh != null)    //update text
             {
                 PixelThresVal.Text = ((int)PixelThresh.Value).ToString();
 
+            }
+
+            if (motionCaptureEnabled)
+            {
+                m_d3dInterop.SetCapture();
             }
         }
 

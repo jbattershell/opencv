@@ -156,9 +156,11 @@ namespace PhoneXamlDirect3DApp1Comp
 					{
 						memcpy(matorig->data, mat->data, 4*mat->cols * mat->rows);
 						ApplyGrayFilter(mat);
+						//ApplyBlurFilter(mat);
 						diffImg(matOlder, matOld, mat, matdiff);
 
-						const int bins = 10;
+						const int bins = 15;
+						//const int bins = 255/pixelThreshold;
 						float binvals[bins];
 						GetHist(matdiff,bins,binvals);
 
@@ -173,9 +175,6 @@ namespace PhoneXamlDirect3DApp1Comp
 							motionDetected=true;
 							if (m_captureFrame)
 							{
-								//auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
-								//this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
-								
 								auto buff = ref new Platform::Array<int>( (int*) matorig->data, matorig->cols * matorig->rows);
 								this->OnCaptureFrameReady( buff, matorig->cols, matorig->rows );
 							}
@@ -186,31 +185,6 @@ namespace PhoneXamlDirect3DApp1Comp
 						//erode(*matdiff,*matOlder,element);
 
 						threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
-
-					//	int dims = 1;
-					//	const int histSize = 10;
-					//	cv::Mat hist = cv::Mat(dims,histSize,CV_8UC4);
-					//	int nimages = 1;
-					//	const int channels = 0;
-					//	const float varranges[] = {0, 256};
-					//	const float* ranges = varranges;
-					//	
-
-					//		cv::calcHist(matdiff, nimages, &channels,
-					//			cv::Mat(), hist, dims, &histSize,
-     //              &ranges, true, false );
-
-
-
-					//float binvals[histSize];
-					//for (int i=0; i<histSize;i++)
-					//{
-					//	binvals[i]=hist.at<float>(i);
-					//}
-
-				   //cv::calcHist( const Mat* images, int nimages, const int* channels,
-       //            InputArray _mask, OutputArray _hist, int dims, const int* histSize,
-       //            const float** ranges, bool uniform, bool accumulate )
 
 						break;	
 					}
@@ -232,7 +206,6 @@ namespace PhoneXamlDirect3DApp1Comp
 			}
 		}
     }
-
 	
     void Direct3DInterop::SetCapture()
     {this->m_captureFrame=true;}
@@ -325,11 +298,16 @@ namespace PhoneXamlDirect3DApp1Comp
 		cv::cvtColor(intermediateMat, *mat, CV_GRAY2BGRA);
 	}
 
-	void Direct3DInterop::ApplyBlurFilter(cv::Mat* mat)
+	void Direct3DInterop::ApplyBlurFilter(cv::Mat* matToBlur)
 	{
+		//My little blurring function
 		cv::Mat intermediateMat;
-		//	cv::Blur(image, intermediateMat, 80, 90);
-		cv::cvtColor(intermediateMat, *mat, CV_GRAY2BGRA);
+		cv::Size blurSize;
+		blurSize.height=10;
+		blurSize.width=10;
+
+		cv::blur(*matToBlur, intermediateMat, blurSize, cv::Point(-1,-1), 4);	//blur, store result in intermediate
+		std::swap(intermediateMat,*matToBlur);	//move blurred image to displayed image
 	}
 
 	void Direct3DInterop::ApplyFindFeaturesFilter(cv::Mat* mat)
@@ -393,6 +371,8 @@ namespace PhoneXamlDirect3DApp1Comp
         manipulationHost->PointerReleased +=
             ref new TypedEventHandler<DrawingSurfaceManipulationHost^, PointerEventArgs^>(this, &Direct3DInterop::OnPointerReleased);
     }
+
+
 
     void Direct3DInterop::RenderResolution::set(Windows::Foundation::Size renderResolution)
     {
