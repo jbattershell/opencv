@@ -23,9 +23,9 @@
                    Checked="RadioButton_Checked"/>
             <RadioButton x:Name="Canny" Content="Canny" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
-            <RadioButton x:Name="Motion" Content="Motion" GroupName="Group1" 
+            <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
-            <RadioButton x:Name="Features" Content="Features" GroupName="Group1" 
+            <RadioButton x:Name="Features" Content="Turn Off Motion Detector" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
 
             <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
@@ -37,7 +37,10 @@
                 <TextBlock Text="Peak Memory: "/>
                 <TextBlock x:Name="PeakMemoryTextBlock"/>
                 <TextBlock Text=" MB"/>
-
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
+                <TextBlock Text="Motion: "/>
+                <TextBlock x:Name="MotionOutput"/>
             </StackPanel>
         </StackPanel>
     </Grid>

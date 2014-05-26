@@ -96,12 +96,13 @@ namespace PhoneXamlDirect3DApp1
                     break;
 
                 case "Motion":
-                    m_d3dInterop.SetAlgorithm(OCVFilterType.eMotion);
+                    //m_d3dInterop.SetAlgorithm(OCVFilterType.eMotion);
+                    m_d3dInterop.SetCapture();
                     break;
 
                 case "Features":
                     //m_d3dInterop.SetAlgorithm(OCVFilterType.eFindFeatures);
-                    m_d3dInterop.SetCapture();
+                    m_d3dInterop.ResetCapture();
                     break;
             }
         }
@@ -115,6 +116,8 @@ namespace PhoneXamlDirect3DApp1
                 MemoryTextBlock.Text = value.ToString();
                 value = DeviceStatus.ApplicationPeakMemoryUsage / (1024.0f * 1024.0f);
                 PeakMemoryTextBlock.Text = value.ToString();
+
+                MotionOutput.Text = m_d3dInterop.MotionStatus().ToString() + " " + m_d3dInterop.LowMotionBins();
             }
             catch (Exception ex)
             {

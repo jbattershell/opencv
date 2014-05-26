@@ -62,6 +62,8 @@ public:
 	event CaptureFrameReadyEvent^ OnCaptureFrameReady;
 	void SetCapture();
 	void ResetCapture();
+	bool MotionStatus();
+	float LowMotionBins();
 
 protected:
 	// Event Handlers
@@ -86,8 +88,11 @@ private:
     OCVFilterType m_algorithm;
     bool m_contentDirty;
 	bool m_captureFrame;
+	bool motionDetected;
+	float bottombins;
     std::shared_ptr<cv::Mat> m_backFrame;
     std::shared_ptr<cv::Mat> m_frontFrame;
+	std::shared_ptr<cv::Mat> m_originalFrontFrame;
     std::shared_ptr<cv::Mat> m_frontMinus1Frame;
     std::shared_ptr<cv::Mat> m_frontMinus2Frame;
     std::shared_ptr<cv::Mat> m_diffFrame;

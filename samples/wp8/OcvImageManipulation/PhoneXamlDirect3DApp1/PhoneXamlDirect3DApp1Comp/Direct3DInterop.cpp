@@ -57,6 +57,7 @@ namespace PhoneXamlDirect3DApp1Comp
         : m_algorithm(OCVFilterType::ePreview)
         , m_contentDirty(false)
 		, m_captureFrame(false)
+		, motionDetected(false)
         , m_backFrame(nullptr)
         , m_frontFrame(nullptr)
         , m_frontMinus1Frame(nullptr)
@@ -87,6 +88,7 @@ namespace PhoneXamlDirect3DApp1Comp
 			//Only goes in here the first time a frame is passed in.
             m_backFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
+            m_originalFrontFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontMinus1Frame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontMinus2Frame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_diffFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
@@ -104,11 +106,13 @@ namespace PhoneXamlDirect3DApp1Comp
 			if (m_renderer)
 			{
 				cv::Mat* mat = m_frontFrame.get();	//load in newest data
+				cv::Mat* matorig = m_originalFrontFrame.get();	//load in newest data
 				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
 				cv::Mat* matOlder = m_frontMinus2Frame.get();	//load in 2 frame old data
 				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
 				//cv::Mat* matDiff = m_diffFrame.get();
 		
+				m_algorithm = OCVFilterType::eMotion;
 				switch (m_algorithm)
 				{
 					case OCVFilterType::ePreview:
@@ -148,19 +152,39 @@ namespace PhoneXamlDirect3DApp1Comp
 					}
 					case OCVFilterType::eMotion:
 					{
+						memcpy(matorig->data, mat->data, 4*mat->cols * mat->rows);
 						ApplyGrayFilter(mat);
 						diffImg(matOlder, matOld, mat, matdiff);
 
 						const int bins = 10;
 						float binvals[bins];
 						GetHist(matdiff,bins,binvals);
+
+						//bottombins = binvals[0] + binvals[1] + binvals[2] + binvals[3];
+						bottombins = binvals[0];
+
+						if (bottombins > 300000)
+						{motionDetected=false;}
+						else
+						{
+							//Send picture to C# code to save
+							motionDetected=true;
+							if (m_captureFrame)
+							{
+								//auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+								//this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+								
+								auto buff = ref new Platform::Array<int>( (int*) matorig->data, matorig->cols * matorig->rows);
+								this->OnCaptureFrameReady( buff, matorig->cols, matorig->rows );
+							}
+						}
 						int i=0;
 
 						Mat element = getStructuringElement( MORPH_RECT,
                                      cv::Size( 3,3 ));
 
 						erode(*matdiff,*matOlder,element);
-						threshold(*matdiff,*matdiff,100,255,THRESH_BINARY);
+						threshold(*matdiff,*matdiff,20,255,THRESH_BINARY);
 
 					//	int dims = 1;
 					//	const int histSize = 10;
@@ -197,22 +221,28 @@ namespace PhoneXamlDirect3DApp1Comp
 				else
 					m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
 
-				if (m_captureFrame)
-				{
-					auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+				//if (m_captureFrame)
+				//{
+				//	auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
 
-					this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
-					m_captureFrame = false;
-				}
+				//	this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+				//	m_captureFrame = false;
+				//}
 			}
 		}
     }
 
 	
-        void Direct3DInterop::SetCapture()
-        {m_captureFrame=true;}
-        void Direct3DInterop::ResetCapture()
-        {m_captureFrame=false;}
+    void Direct3DInterop::SetCapture()
+    {m_captureFrame=true;}
+    void Direct3DInterop::ResetCapture()
+    {m_captureFrame=false;}
+
+	
+	bool Direct3DInterop::MotionStatus()
+	{return motionDetected;}
+	float Direct3DInterop::LowMotionBins()
+	{return bottombins;}
 
 	void Direct3DInterop::GetHist(cv::Mat* image, int bins, float binvals[])
 	{
