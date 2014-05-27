@@ -43,12 +43,12 @@
                 <TextBlock x:Name="MotionOutput"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Pixel threshold"/>
+                <TextBlock Text="Does nothing"/>
                 <Slider x:Name="PixelThresh" Width="240" Maximum="50" Minimum="10" ValueChanged="PixelThresh_ValueChanged" Value="30" />
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
                 <TextBlock Text="Image threshold"/>
-                <Slider x:Name="ImageThresh" Width="240" Minimum="295000" Maximum="307000" ValueChanged="ImageThresh_ValueChanged" Value="304500" />
+                <Slider x:Name="ImageThresh" Width="240" Minimum="280000" Maximum="306000" ValueChanged="ImageThresh_ValueChanged" Value="295000" />
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,138,0" Height="24">
                 <TextBlock Text="Pixel: "/>

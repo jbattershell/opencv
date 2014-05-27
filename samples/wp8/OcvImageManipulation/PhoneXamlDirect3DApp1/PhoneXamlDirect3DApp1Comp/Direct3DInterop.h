@@ -121,6 +121,7 @@ private:
 	void ApplyFindFeaturesFilter(cv::Mat* mat);
 	void ApplySepiaFilter(cv::Mat* mat); 
 	void GetHist(cv::Mat* image, int bins, float binvals[]);
+	void ShiftBackground(cv::Mat* newframe, cv::Mat* backFrame, double scale);
 };
 
 class CameraCapturePreviewSink :

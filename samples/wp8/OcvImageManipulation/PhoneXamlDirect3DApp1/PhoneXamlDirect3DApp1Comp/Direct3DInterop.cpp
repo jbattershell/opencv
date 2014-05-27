@@ -114,51 +114,12 @@ namespace PhoneXamlDirect3DApp1Comp
 				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
 				cv::Mat* matOlder = m_frontMinus2Frame.get();	//load in 2 frame old data
 				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
-				cv::Mat* matback = m_backgroundFrame.get();	//load in newest data
-				//cv::Mat* matDiff = m_diffFrame.get();
-		
-				//m_algorithm = OCVFilterType::eMotion;
-				//switch (m_algorithm)
-				//{
-				//	case OCVFilterType::ePreview:
-				//	{
-				//		break;
-				//	}
+				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
 
-				//	case OCVFilterType::eGray:
-				//	{
-				//		ApplyGrayFilter(mat);
-				//		break;
-				//	}
-
-				//	case OCVFilterType::eCanny:
-				//	{
-				//		ApplyCannyFilter(mat);
-				//		break;
-				//	}
-
-				//	case OCVFilterType::eBlur:
-				//	{
-				//		ApplyBlurFilter(mat);
-				//		break;
-				//	}
-
-				//	case OCVFilterType::eFindFeatures:
-				//	{
-				//		m_captureFrame = true;	//temporarily hijacking this function
-				//		//ApplyFindFeaturesFilter(mat);
-				//		break;
-				//	}
-
-				//	case OCVFilterType::eSepia:
-				//	{
-				//		ApplySepiaFilter(mat);
-				//		break;
-				//	}
-				//	case OCVFilterType::eMotion:
-				//	{
 						memcpy(matorig->data, mat->data, 4*mat->cols * mat->rows);
 						ApplyGrayFilter(mat);
+						ShiftBackground(mat,matback,0.1f);	//Move the background image a little closer to the current image
+
 						if(m_getBackground)
 						{
 							memcpy(matback->data, mat->data, 4*mat->cols * mat->rows);
@@ -169,11 +130,9 @@ namespace PhoneXamlDirect3DApp1Comp
 						diffImg(matOld, matback, mat, matdiff);	//looks for motion vs background frame
 
 						const int bins = 15;
-						//const int bins = 255/pixelThreshold;
 						float binvals[bins];
 						GetHist(matdiff,bins,binvals);
 
-						//bottombins = binvals[0] + binvals[1] + binvals[2] + binvals[3];
 						bottombins = binvals[0];
 
 						if (bottombins > imageThreshold)
@@ -190,28 +149,9 @@ namespace PhoneXamlDirect3DApp1Comp
 						}
 						int i=0;
 
-						//Mat element = getStructuringElement( MORPH_RECT, cv::Size( 3,3 ));
-						//erode(*matdiff,*matOlder,element);
-
+						pixelThreshold=255/bins;
 						threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
-
-				//		break;	
-				//	}
-				//}
-				
-
-				//if(m_algorithm == OCVFilterType::eMotion)
-					m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
-				//else
-				//	m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows);
-
-				//if (m_captureFrame)
-				//{
-				//	auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
-
-				//	this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
-				//	m_captureFrame = false;
-				//}
+						m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
 			}
 		}
     }
@@ -255,17 +195,25 @@ namespace PhoneXamlDirect3DApp1Comp
 		}
 	}
 
+	void Direct3DInterop::ShiftBackground(cv::Mat* newframe, cv::Mat* backFrame, double scale)
+	{
+		cv::Mat scaledNewFrame;
+		(*newframe).convertTo(scaledNewFrame, -1, scale, 0);
+		(*backFrame).convertTo(*backFrame, -1, 1.0f-scale, 0);
+		(*backFrame) += scaledNewFrame;
+	}
+
 	//Computes abs(t0-t1) & abs(t2-t1)
 	void Direct3DInterop::diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* t2, cv::Mat* output)
 	{
-		//cv::Mat intermediateMat();
+		cv::Mat intermediateMat;
 		cv::absdiff(*t0,*t1,*output);	//take difference of past two frames
 
-		//cv::absdiff(*t2,*t1,intermediateMat);	
-		//cv::bitwise_and(*output,intermediateMat,*output);
+		cv::absdiff(*t2,*t1,intermediateMat);	
+		cv::bitwise_and(*output,intermediateMat,*output);
 
-		cv::absdiff(*t2,*t1,*t0);	//overwrites t0 (t0 will be overwritten in the next cycle anyway)
-		cv::bitwise_and(*output,*t0,*output);
+		//cv::absdiff(*t2,*t1,*t0);	//overwrites t0 (t0 will be overwritten in the next cycle anyway)
+		//cv::bitwise_and(*output,*t0,*output);
 
 		ResetTransparency(output);	//only needed when I want to visualize the result
 			
@@ -287,12 +235,6 @@ namespace PhoneXamlDirect3DApp1Comp
 			for(unsigned int x=0; x<f.width();x++)
 			f(x,y).alpha = 255;
 		}
-
-		////transparency is last (4th) byte in each pixel
-		//for(unsigned int i=3;i<imgBytes;i+=4)
-		//{
-		//	dataptr[i]=255;
-		//}
 
 		return;
 	}
