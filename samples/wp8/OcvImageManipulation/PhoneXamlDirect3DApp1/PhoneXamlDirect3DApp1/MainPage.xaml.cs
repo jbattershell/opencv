@@ -66,7 +66,6 @@ namespace PhoneXamlDirect3DApp1
 
         void m_d3dInterop_OnCaptureFrameReady(int[] data, int cols, int rows)
         {
-            
             m_d3dInterop.ResetCapture();
             Dispatcher.BeginInvoke(() =>
             {
@@ -77,13 +76,9 @@ namespace PhoneXamlDirect3DApp1
                 wb.SaveJpeg(fileStream, wb.PixelWidth, wb.PixelHeight, 100, 100);
                 fileStream.Seek(0, SeekOrigin.Begin);
 
-                //DateTime now = DateTime.Now;
-
                 string name = "motion "+ DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff");
 
-               // string name = "Motion at " + now.Year.ToString() + "-" + now.Month.ToString() + "-" + now.Day.ToString() + " " + now.Hour.ToString() + "." + now.Minute.ToString() + "." + now.Second.ToString() + "." + now.Millisecond.ToString();
-
-                library.SavePictureToCameraRoll(name, fileStream);
+               library.SavePictureToCameraRoll(name, fileStream);
             });
 
         }
@@ -153,10 +148,6 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
-        //worked well in baby room
-        //pixel=30
-        //image=304500
-
         private void ImageThresh_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (ImageThresh != null)
@@ -166,6 +157,7 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
+        //In the current implementation, this doesn't actually do anything.
         private void PixelThresh_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (PixelThresh != null)
