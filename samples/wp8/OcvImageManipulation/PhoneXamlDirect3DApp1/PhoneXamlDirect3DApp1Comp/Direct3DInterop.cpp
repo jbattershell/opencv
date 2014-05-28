@@ -64,9 +64,11 @@ namespace PhoneXamlDirect3DApp1Comp
         , m_frontMinus1Frame(nullptr)
         , m_frontMinus2Frame(nullptr)
         , m_diffFrame(nullptr)
+		, pauseFrames (false)
     {
 		imageThreshold = 300000;
 		pixelThreshold = 40;
+		//bins = 15;
     }
 
     bool Direct3DInterop::SwapFrames()
@@ -105,6 +107,8 @@ namespace PhoneXamlDirect3DApp1Comp
 
     void Direct3DInterop::ProcessFrame()
     {
+		if (pauseFrames) //don't do if paused
+			return;
 		if (SwapFrames())	//always returns true unless backframe is a nullptr. Puts most current into frontframe
 		{
 			if (m_renderer)
@@ -155,6 +159,8 @@ namespace PhoneXamlDirect3DApp1Comp
 			}
 		}
     }
+	int Direct3DInterop::GetNumberOfBins()
+	{return 15;}	//not sure how to get a const int in my class.  Hardcoding in the meantime...
 	
     void Direct3DInterop::SetCapture()
     {this->m_captureFrame=true;}
@@ -162,6 +168,11 @@ namespace PhoneXamlDirect3DApp1Comp
     {this->m_captureFrame=false;}
 
 	
+	void Direct3DInterop::pauseVideo()
+	{this->pauseFrames=true;}
+	void Direct3DInterop::resumeVideo()
+	{this->pauseFrames=false;}
+
 	bool Direct3DInterop::MotionStatus()
 	{return this->motionDetected;}
 	float Direct3DInterop::LowMotionBins()

@@ -147,6 +147,10 @@
     <Content Include="SplashScreenImage.jpg" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\libsvm\libsvm.csproj">
+      <Project>{04647899-06D3-494E-A670-F25E17BF6B70}</Project>
+      <Name>libsvm</Name>
+    </ProjectReference>
     <ProjectReference Include="..\PhoneXamlDirect3DApp1Comp\PhoneXamlDirect3DApp1Comp.vcxproj">
       <Name>PhoneXamlDirect3DApp1Comp</Name>
     </ProjectReference>

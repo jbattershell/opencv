@@ -19,8 +19,6 @@
         <StackPanel Margin="40">
             <RadioButton x:Name="Normal" Content="Normal" GroupName="Group1" 
                    Checked="RadioButton_Checked" IsChecked="True"/>
-            <RadioButton x:Name="Gray" Content="Gray" GroupName="Group1" 
-                   Checked="RadioButton_Checked"/>
             <RadioButton x:Name="Canny" Content="Set Background Image" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
             <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
@@ -39,10 +37,14 @@
                 <TextBlock Text=" MB"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Motion: "/>
+                <TextBlock Text="Motion Manual: "/>
                 <TextBlock x:Name="MotionOutput"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
+                <TextBlock Text="Motion Learned: "/>
+                <TextBlock x:Name="LearnedOutput"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"  Margin="20,0,0,0" Height="47">
                 <TextBlock Text="Does nothing"/>
                 <Slider x:Name="PixelThresh" Width="240" Maximum="50" Minimum="10" ValueChanged="PixelThresh_ValueChanged" Value="30" />
             </StackPanel>
@@ -57,6 +59,19 @@
             <StackPanel Orientation="Horizontal"  Margin="20,0,154,0" Height="24">
                 <TextBlock Text="Image: "/>
                 <TextBlock x:Name="ImageThresVal" Text="Loading "/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Height="72">
+                <RadioButton x:Name="TrainingOff" Content="Off" GroupName="Group2"
+                   Checked="Training_Checked" IsChecked="True"/>
+                <RadioButton x:Name="TrainingPos" Content="Motion" GroupName="Group2" 
+                   Checked="Training_Checked" />
+                <RadioButton x:Name="TrainingNeg" Content="Still" GroupName="Group2" 
+                   Checked="Training_Checked" />
+
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Height="64">
+                <Button x:Name="ModelLearn" Click="learnButton_Click" Width="126" Content="Learn" />
+                <TextBlock x:Name="learnOutput" Text="No Learn Started "/>
             </StackPanel>
         </StackPanel>
     </Grid>

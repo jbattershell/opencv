@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencv_flann", "..\..\..\bi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OcvImageManipulation", "PhoneXamlDirect3DApp1\PhoneXamlDirect3DApp1\OcvImageManipulation.csproj", "{CC734B3D-D8F2-4528-B223-0E7B8A4F6CC7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libsvm", "libsvm\libsvm.csproj", "{04647899-06D3-494E-A670-F25E17BF6B70}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +169,26 @@ Global
 		{CC734B3D-D8F2-4528-B223-0E7B8A4F6CC7}.Release|x86.ActiveCfg = Release|x86
 		{CC734B3D-D8F2-4528-B223-0E7B8A4F6CC7}.Release|x86.Build.0 = Release|x86
 		{CC734B3D-D8F2-4528-B223-0E7B8A4F6CC7}.Release|x86.Deploy.0 = Release|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|ARM.ActiveCfg = Debug|ARM
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|ARM.Build.0 = Debug|ARM
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|Win32.ActiveCfg = Debug|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|Win32.Build.0 = Debug|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|x86.ActiveCfg = Debug|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Debug|x86.Build.0 = Debug|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|ARM.ActiveCfg = Release|ARM
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|ARM.Build.0 = Release|ARM
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|Mixed Platforms.Build.0 = Release|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|Win32.ActiveCfg = Release|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|Win32.Build.0 = Release|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|x86.ActiveCfg = Release|x86
+		{04647899-06D3-494E-A670-F25E17BF6B70}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
