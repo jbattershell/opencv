@@ -93,7 +93,6 @@ namespace PhoneXamlDirect3DApp1Comp
 			//Only goes in here the first time a frame is passed in.
             m_backFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
-            m_originalFrontFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontMinus1Frame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_frontMinus2Frame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
             m_diffFrame = std::shared_ptr<cv::Mat> (new cv::Mat(height, width, CV_8UC4));
@@ -114,14 +113,10 @@ namespace PhoneXamlDirect3DApp1Comp
 			if (m_renderer)
 			{
 				cv::Mat* mat = m_frontFrame.get();	//load in newest data
-				cv::Mat* matorig = m_originalFrontFrame.get();	//load in newest data
 				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
 				cv::Mat* matOlder = m_frontMinus2Frame.get();	//load in 2 frame old data
 				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
 				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
-
-						memcpy(matorig->data, mat->data, 4*mat->cols * mat->rows);
-						//ApplyGrayFilter(mat);
 
 						if(m_getBackground)
 						{
@@ -130,7 +125,7 @@ namespace PhoneXamlDirect3DApp1Comp
 						}
 						//ApplyBlurFilter(mat);
 						//diffImg(matOlder, matOld, mat, matdiff);	//looks for motion in the last three frames
-						diffImg(matOld, matback, mat, matdiff);	//looks for motion vs background frame
+						diffImg(matback, mat, matdiff);	//looks for motion vs background frame
 
 						ShiftBackground(mat,matback,0.35f);	//Move the background image a little closer to the current image
 						
@@ -142,32 +137,14 @@ namespace PhoneXamlDirect3DApp1Comp
 						bottombins = binvals[0];
 
 						////////////////////////////////////////////
-						////For manual capture mode
-						//if (bottombins > imageThreshold)
-						//{motionDetected=false;}
-						//else
-						//{
-						//	//Send picture to C# code to save
-						//	motionDetected=true;
-						//	if (m_captureFrame)
-						//	{
-						//		auto buff = ref new Platform::Array<int>( (int*) matorig->data, matorig->cols * matorig->rows);
-						//		this->OnCaptureFrameReady( buff, matorig->cols, matorig->rows );
-						//	}
-						//}
-						////////////////////////////////////////////
-
-						
-						////////////////////////////////////////////
 						//For machine learning capture mode
 							this->OnFrameReady(bottombins);
 						
 							//Send picture to C# code to save
-							//motionDetected=true;
 							if (m_captureFrame)
 							{
-								auto buff = ref new Platform::Array<int>( (int*) matorig->data, matorig->cols * matorig->rows);
-								this->OnCaptureFrameReady( buff, matorig->cols, matorig->rows );
+								auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+								this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
 							}
 						
 						////////////////////////////////////////////
@@ -242,16 +219,20 @@ namespace PhoneXamlDirect3DApp1Comp
 	//Computes abs(t0-t1) & abs(t2-t1)
 	void Direct3DInterop::diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* t2, cv::Mat* output)
 	{
-		//cv::Mat intermediateMat;
-		//cv::absdiff(*t0,*t1,*output);	//take difference of past two frames
-		//cv::absdiff(*t2,*t1,intermediateMat);	
-		//cv::bitwise_and(*output,intermediateMat,*output);
-
-		
-		cv::absdiff(*t2,*t1,*output);	//take difference of newest frame and background (optimization experiment)
+		cv::Mat intermediateMat;
+		cv::absdiff(*t0,*t1,*output);	//take difference of past two frames
+		cv::absdiff(*t2,*t1,intermediateMat);	
+		cv::bitwise_and(*output,intermediateMat,*output);
 
 		ResetTransparency(output);	//only needed when I want to visualize the result
-			
+	}
+
+	//Computes abs(t0-t1)
+	void Direct3DInterop::diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* output)
+	{
+		cv::absdiff(*t0,*t1,*output);	//take difference of newest frame and background (optimization experiment)
+
+		ResetTransparency(output);	//only needed when I want to visualize the result		
 	}
 
 	void Direct3DInterop::ResetTransparency(cv::Mat* mat){

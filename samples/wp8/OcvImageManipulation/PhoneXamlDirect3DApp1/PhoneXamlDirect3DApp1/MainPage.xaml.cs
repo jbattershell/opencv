@@ -57,7 +57,6 @@ namespace PhoneXamlDirect3DApp1
 
             motionCaptureEnabled = false;
             trainingMode = NOTTRAINING;
-            //trainingTimerOn = false;
         }
 
         private void DrawingSurface_Loaded(object sender, RoutedEventArgs e)
