@@ -27,7 +27,6 @@ namespace PhoneXamlDirect3DApp1
     {
         private Direct3DInterop m_d3dInterop = new Direct3DInterop();
         private DispatcherTimer m_timer;
-        private DispatcherTimer training_timer;
         MediaLibrary library = new MediaLibrary();
         private bool motionCaptureEnabled;
         
@@ -35,7 +34,7 @@ namespace PhoneXamlDirect3DApp1
             const int NOTTRAINING = 0;
             const int POSITIVETRAINING = 1;
             const int NEGATIVETRAINING = 2;
-            private bool trainingTimerOn;
+            const int SAMPLESTOTRAIN = 10;
 
 
         // This is the SVM model we will eventually train up
@@ -56,27 +55,9 @@ namespace PhoneXamlDirect3DApp1
             m_timer.Tick += new EventHandler(timer_Tick);
             m_timer.Start();
 
-            training_timer = new DispatcherTimer();
-            //training_timer.Interval = new TimeSpan(0, 0, 0, 0, 35);   //trigger timer at 28Hz (that would be a good fps)
-            training_timer.Interval = new TimeSpan(0, 0, 0, 0, 100);   //trigger timer at 28Hz (that would be a good fps)
-            training_timer.Tick += new EventHandler(training_timer_tick);
-            //Don't start until triggered
-
             motionCaptureEnabled = false;
             trainingMode = NOTTRAINING;
-            trainingTimerOn = false;
-        }
-
-        private void training_timer_tick(object sender, EventArgs e)
-        {
-            if (m_d3dInterop != null && posRecordings != null && negRecordings != null && trainingMode == POSITIVETRAINING)
-            { 
-                posRecordings.Add(m_d3dInterop.LowMotionBins());
-            }
-            else if (m_d3dInterop != null && posRecordings != null && negRecordings != null && trainingMode == NEGATIVETRAINING)
-            {
-                negRecordings.Add(m_d3dInterop.LowMotionBins());
-            }
+            //trainingTimerOn = false;
         }
 
         private void DrawingSurface_Loaded(object sender, RoutedEventArgs e)
@@ -102,6 +83,44 @@ namespace PhoneXamlDirect3DApp1
 
             //Hookup capture frame
             m_d3dInterop.OnCaptureFrameReady += m_d3dInterop_OnCaptureFrameReady;
+            m_d3dInterop.OnFrameReady += m_d3dInterop_OnFrameReady;
+        }
+
+        void m_d3dInterop_OnFrameReady(float lowbin)
+        {
+            //Learned thresh eval
+            if (model != null)
+            {
+                // Copy in the latest data to recogBuff
+                double[] featureData = computeFeatureVector(lowbin);
+                if (recogBuff == null)
+                {
+                    recogBuff = new svm_node[featureData.Length];
+                    for (int i = 0; i < recogBuff.Length; ++i)
+                    {
+                        recogBuff[i] = new svm_node();
+                        recogBuff[i].index = i;
+                    }
+                }
+
+                // Convert the feature vector over to the svm_node structure
+                for (int i = 0; i < featureData.Length; ++i)
+                {
+                    recogBuff[i].value = featureData[i];
+                }
+
+                // Let's try our hand at some recognition!
+                DateTime startTime = DateTime.Now;
+
+                string resultStr = "";
+                double val = evaluate(recogBuff, model, ref resultStr);
+
+                if (val == 1.0)
+                    m_d3dInterop.SetMotionDetected(true);
+                else
+                    m_d3dInterop.SetMotionDetected(false);
+
+            }
         }
 
         void m_d3dInterop_OnCaptureFrameReady(int[] data, int cols, int rows)
@@ -132,26 +151,18 @@ namespace PhoneXamlDirect3DApp1
             {
                 case "TrainingOff":
                     trainingMode = NOTTRAINING;
-                    if (trainingTimerOn)
-                        training_timer.Stop();
 
                     break;
 
                 case "TrainingPos":
+                    posRecordings.Clear();
                     trainingMode = POSITIVETRAINING;
-                    
-                    //turn on the timer if not already
-                    if (!trainingTimerOn)
-                        training_timer.Start();
 
                     break;
 
                 case "TrainingNeg":
+                    negRecordings.Clear();
                     trainingMode = NEGATIVETRAINING;
-                    
-                    //turn on the timer if not already
-                    if (!trainingTimerOn)
-                        training_timer.Start();
 
                     break;
             }
@@ -189,6 +200,42 @@ namespace PhoneXamlDirect3DApp1
 
         private void timer_Tick(object sender, EventArgs e)
         {
+
+            //////////////////////////////////
+            //Capture training data
+
+            if (negRecordings.Count >= SAMPLESTOTRAIN && trainingMode == NEGATIVETRAINING)
+            {
+                //training done
+                Dispatcher.BeginInvoke(() =>
+                {
+                    trainingMode = NOTTRAINING;
+                    learnOutput.Text = "Negative Samples Recorded";
+
+                });
+            }
+            else if (posRecordings.Count >= SAMPLESTOTRAIN && trainingMode == POSITIVETRAINING)
+            {
+                //training done
+                Dispatcher.BeginInvoke(() =>
+                {
+                    trainingMode = NOTTRAINING;
+                    learnOutput.Text = "Positive Samples Recorded";
+
+                });
+            }
+            else if (m_d3dInterop != null && posRecordings != null && negRecordings != null && trainingMode == POSITIVETRAINING && posRecordings.Count < SAMPLESTOTRAIN)
+            {
+                posRecordings.Add(m_d3dInterop.LowMotionBins());
+            }
+            else if (m_d3dInterop != null && posRecordings != null && negRecordings != null && trainingMode == NEGATIVETRAINING && negRecordings.Count < SAMPLESTOTRAIN)
+            {
+                //Only records a certain number of frames
+                negRecordings.Add(m_d3dInterop.LowMotionBins());
+            }
+
+            ///////////////////////////
+
             try
             {
                 // These are TextBlock controls that are created in the page’s XAML file.  
@@ -200,46 +247,47 @@ namespace PhoneXamlDirect3DApp1
                 MotionOutput.Text = m_d3dInterop.MotionStatus().ToString() + " " + m_d3dInterop.LowMotionBins();
 
 
-                //Learned thresh eval
-                if (model != null)
-                {
-                    // Copy in the latest data to recogBuff
-                    double[] featureData = computeFeatureVector(m_d3dInterop.LowMotionBins()); 
-                    if (recogBuff == null)
-                    {
-                        recogBuff = new svm_node[featureData.Length];
-                        for (int i = 0; i < recogBuff.Length; ++i)
-                        {
-                            recogBuff[i] = new svm_node();
-                            recogBuff[i].index = i;
-                        }
-                    }
+                ////Learned thresh eval
+                //if (model != null)
+                //{
+                //    // Copy in the latest data to recogBuff
+                //    double[] featureData = computeFeatureVector(m_d3dInterop.LowMotionBins()); 
+                //    if (recogBuff == null)
+                //    {
+                //        recogBuff = new svm_node[featureData.Length];
+                //        for (int i = 0; i < recogBuff.Length; ++i)
+                //        {
+                //            recogBuff[i] = new svm_node();
+                //            recogBuff[i].index = i;
+                //        }
+                //    }
 
-                    // Convert the feature vector over to the svm_node structure
-                    for (int i = 0; i < featureData.Length; ++i)
-                    {
-                        recogBuff[i].value = featureData[i];
-                    }
+                //    // Convert the feature vector over to the svm_node structure
+                //    for (int i = 0; i < featureData.Length; ++i)
+                //    {
+                //        recogBuff[i].value = featureData[i];
+                //    }
 
-                    // Let's try our hand at some recognition!
-                    DateTime startTime = DateTime.Now;
+                //    // Let's try our hand at some recognition!
+                //    DateTime startTime = DateTime.Now;
 
-                    string resultStr = "";
-                    double val = evaluate(recogBuff, model, ref resultStr);
-                    Dispatcher.BeginInvoke(() =>
-                    {
-                        resultStr = "Recognition took " + (startTime - DateTime.Now) + "\n" + resultStr;
+                //    string resultStr = "";
+                //    double val = evaluate(recogBuff, model, ref resultStr);
+                //    Dispatcher.BeginInvoke(() =>
+                //    {
+                //        resultStr = "Recognition took " + (startTime - DateTime.Now) + "\n" + resultStr;
 
-                        if (val == 1.0)
-                        {
-                            resultStr += "Found positive match at " + DateTime.Now + "\n";
-                        }
-                        //learnOutput.Text = resultStr;
-                        LearnedOutput.Text = val.ToString();
+                //        if (val == 1.0)
+                //        {
+                //            resultStr += "Found positive match at " + DateTime.Now + "\n";
+                //        }
+                //        //learnOutput.Text = resultStr;
+                //        LearnedOutput.Text = val.ToString();
 
-                    });
+                //    });
 
-                }
+                //}
+                LearnedOutput.Text = m_d3dInterop.MotionStatus().ToString();
 
             }
             catch (Exception ex)
@@ -326,7 +374,6 @@ namespace PhoneXamlDirect3DApp1
 
             return featureVec;
         }
-
 
         // This takes in a vector of "labels", (e.g. 0 for a negative example, 1 for a positive example), and a 2-d array
         // of feature vectors, where each vector in featureVecs is labeled by the corresponding value in labels

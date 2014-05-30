@@ -19,12 +19,10 @@
         <StackPanel Margin="40">
             <RadioButton x:Name="Normal" Content="Normal" GroupName="Group1" 
                    Checked="RadioButton_Checked" IsChecked="True"/>
-            <RadioButton x:Name="Canny" Content="Set Background Image" GroupName="Group1" 
-                   Checked="RadioButton_Checked"/>
             <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
             <RadioButton x:Name="Features" Content="Turn Off Motion Detector" GroupName="Group1" 
-                   Checked="RadioButton_Checked"/>
+            	Checked="RadioButton_Checked"/>
 
             <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
                 <TextBlock Text="Memory: "/>
@@ -49,7 +47,7 @@
                 <Slider x:Name="PixelThresh" Width="240" Maximum="50" Minimum="10" ValueChanged="PixelThresh_ValueChanged" Value="30" />
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Image threshold"/>
+                <TextBlock Text="Manual threshold"/>
                 <Slider x:Name="ImageThresh" Width="240" Minimum="280000" Maximum="306000" ValueChanged="ImageThresh_ValueChanged" Value="295000" />
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,138,0" Height="24">
@@ -69,7 +67,7 @@
                    Checked="Training_Checked" />
 
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Height="64">
+            <StackPanel Orientation="Horizontal" Height="71">
                 <Button x:Name="ModelLearn" Click="learnButton_Click" Width="126" Content="Learn" />
                 <TextBlock x:Name="learnOutput" Text="No Learn Started "/>
             </StackPanel>

@@ -121,8 +121,7 @@ namespace PhoneXamlDirect3DApp1Comp
 				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
 
 						memcpy(matorig->data, mat->data, 4*mat->cols * mat->rows);
-						ApplyGrayFilter(mat);
-						ShiftBackground(mat,matback,0.1f);	//Move the background image a little closer to the current image
+						//ApplyGrayFilter(mat);
 
 						if(m_getBackground)
 						{
@@ -133,25 +132,45 @@ namespace PhoneXamlDirect3DApp1Comp
 						//diffImg(matOlder, matOld, mat, matdiff);	//looks for motion in the last three frames
 						diffImg(matOld, matback, mat, matdiff);	//looks for motion vs background frame
 
+						ShiftBackground(mat,matback,0.35f);	//Move the background image a little closer to the current image
+						
+						ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
 						const int bins = 15;
 						float binvals[bins];
 						GetHist(matdiff,bins,binvals);
 
 						bottombins = binvals[0];
 
-						if (bottombins > imageThreshold)
-						{motionDetected=false;}
-						else
-						{
+						////////////////////////////////////////////
+						////For manual capture mode
+						//if (bottombins > imageThreshold)
+						//{motionDetected=false;}
+						//else
+						//{
+						//	//Send picture to C# code to save
+						//	motionDetected=true;
+						//	if (m_captureFrame)
+						//	{
+						//		auto buff = ref new Platform::Array<int>( (int*) matorig->data, matorig->cols * matorig->rows);
+						//		this->OnCaptureFrameReady( buff, matorig->cols, matorig->rows );
+						//	}
+						//}
+						////////////////////////////////////////////
+
+						
+						////////////////////////////////////////////
+						//For machine learning capture mode
+							this->OnFrameReady(bottombins);
+						
 							//Send picture to C# code to save
-							motionDetected=true;
+							//motionDetected=true;
 							if (m_captureFrame)
 							{
 								auto buff = ref new Platform::Array<int>( (int*) matorig->data, matorig->cols * matorig->rows);
 								this->OnCaptureFrameReady( buff, matorig->cols, matorig->rows );
 							}
-						}
-						int i=0;
+						
+						////////////////////////////////////////////
 
 						pixelThreshold=255/bins;
 						threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
@@ -166,6 +185,12 @@ namespace PhoneXamlDirect3DApp1Comp
     {this->m_captureFrame=true;}
     void Direct3DInterop::ResetCapture()
     {this->m_captureFrame=false;}
+
+	
+	void Direct3DInterop::SetMotionDetected(bool motion)
+	{
+		this->motionDetected=motion;
+	}
 
 	
 	void Direct3DInterop::pauseVideo()
@@ -217,14 +242,13 @@ namespace PhoneXamlDirect3DApp1Comp
 	//Computes abs(t0-t1) & abs(t2-t1)
 	void Direct3DInterop::diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* t2, cv::Mat* output)
 	{
-		cv::Mat intermediateMat;
-		cv::absdiff(*t0,*t1,*output);	//take difference of past two frames
+		//cv::Mat intermediateMat;
+		//cv::absdiff(*t0,*t1,*output);	//take difference of past two frames
+		//cv::absdiff(*t2,*t1,intermediateMat);	
+		//cv::bitwise_and(*output,intermediateMat,*output);
 
-		cv::absdiff(*t2,*t1,intermediateMat);	
-		cv::bitwise_and(*output,intermediateMat,*output);
-
-		//cv::absdiff(*t2,*t1,*t0);	//overwrites t0 (t0 will be overwritten in the next cycle anyway)
-		//cv::bitwise_and(*output,*t0,*output);
+		
+		cv::absdiff(*t2,*t1,*output);	//take difference of newest frame and background (optimization experiment)
 
 		ResetTransparency(output);	//only needed when I want to visualize the result
 			
