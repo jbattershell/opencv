@@ -173,26 +173,12 @@ namespace PhoneXamlDirect3DApp1
             RadioButton rb = sender as RadioButton;
             switch (rb.Name)
             {
-                case "Normal":
-                    m_d3dInterop.SetAlgorithm(OCVFilterType.ePreview);
-                    break;
-
-                case "Gray":
-                    m_d3dInterop.SetAlgorithm(OCVFilterType.eGray);
-                    break;
-
-                case "Canny":
-                    //m_d3dInterop.SetAlgorithm(OCVFilterType.eCanny);
-                    m_d3dInterop.SetBackground();
-                    break;
-
+               
                 case "Motion":
-                    //m_d3dInterop.SetAlgorithm(OCVFilterType.eMotion);
                     motionCaptureEnabled = true;
                     break;
 
-                case "Features":
-                    //m_d3dInterop.SetAlgorithm(OCVFilterType.eFindFeatures);
+                case "MotionOff":
                     motionCaptureEnabled = false;
                     break;
             }
@@ -244,49 +230,7 @@ namespace PhoneXamlDirect3DApp1
                 value = DeviceStatus.ApplicationPeakMemoryUsage / (1024.0f * 1024.0f);
                 PeakMemoryTextBlock.Text = value.ToString();
 
-                MotionOutput.Text = m_d3dInterop.MotionStatus().ToString() + " " + m_d3dInterop.LowMotionBins();
-
-
-                ////Learned thresh eval
-                //if (model != null)
-                //{
-                //    // Copy in the latest data to recogBuff
-                //    double[] featureData = computeFeatureVector(m_d3dInterop.LowMotionBins()); 
-                //    if (recogBuff == null)
-                //    {
-                //        recogBuff = new svm_node[featureData.Length];
-                //        for (int i = 0; i < recogBuff.Length; ++i)
-                //        {
-                //            recogBuff[i] = new svm_node();
-                //            recogBuff[i].index = i;
-                //        }
-                //    }
-
-                //    // Convert the feature vector over to the svm_node structure
-                //    for (int i = 0; i < featureData.Length; ++i)
-                //    {
-                //        recogBuff[i].value = featureData[i];
-                //    }
-
-                //    // Let's try our hand at some recognition!
-                //    DateTime startTime = DateTime.Now;
-
-                //    string resultStr = "";
-                //    double val = evaluate(recogBuff, model, ref resultStr);
-                //    Dispatcher.BeginInvoke(() =>
-                //    {
-                //        resultStr = "Recognition took " + (startTime - DateTime.Now) + "\n" + resultStr;
-
-                //        if (val == 1.0)
-                //        {
-                //            resultStr += "Found positive match at " + DateTime.Now + "\n";
-                //        }
-                //        //learnOutput.Text = resultStr;
-                //        LearnedOutput.Text = val.ToString();
-
-                //    });
-
-                //}
+                MotionOutput.Text = m_d3dInterop.LowMotionBins().ToString();
                 LearnedOutput.Text = m_d3dInterop.MotionStatus().ToString();
 
             }
@@ -298,12 +242,6 @@ namespace PhoneXamlDirect3DApp1
             if (ImageThresh != null)    //update text
             {
                 ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
-
-            }
-
-            if (PixelThresh != null)    //update text
-            {
-                PixelThresVal.Text = ((int)PixelThresh.Value).ToString();
 
             }
 
@@ -319,17 +257,6 @@ namespace PhoneXamlDirect3DApp1
             {
                 m_d3dInterop.SetImageThreshold((int)ImageThresh.Value);
                 ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
-            }
-        }
-
-        //In the current implementation, this doesn't actually do anything.
-        private void PixelThresh_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (PixelThresh != null)
-            {
-                m_d3dInterop.SetPixelThreshold((int)PixelThresh.Value);
-                PixelThresVal.Text = ((int)PixelThresh.Value).ToString();
-
             }
         }
 

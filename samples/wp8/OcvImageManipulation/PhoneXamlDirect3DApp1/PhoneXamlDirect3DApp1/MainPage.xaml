@@ -17,12 +17,10 @@
     <Grid x:Name="LayoutRoot" Background="Transparent">
         <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" />
         <StackPanel Margin="40">
-            <RadioButton x:Name="Normal" Content="Normal" GroupName="Group1" 
-                   Checked="RadioButton_Checked" IsChecked="True"/>
             <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
                    Checked="RadioButton_Checked"/>
-            <RadioButton x:Name="Features" Content="Turn Off Motion Detector" GroupName="Group1" 
-            	Checked="RadioButton_Checked"/>
+            <RadioButton x:Name="MotionOff" Content="Turn Off Motion Detector" GroupName="Group1" 
+            	Checked="RadioButton_Checked" IsChecked="True"/>
 
             <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
                 <TextBlock Text="Memory: "/>
@@ -35,27 +33,19 @@
                 <TextBlock Text=" MB"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Motion Manual: "/>
+                <TextBlock Text="Low Motion Count: "/>
                 <TextBlock x:Name="MotionOutput"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Motion Learned: "/>
+                <TextBlock Text="Motion Seen: "/>
                 <TextBlock x:Name="LearnedOutput"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="20,0,0,0" Height="47">
-                <TextBlock Text="Does nothing"/>
-                <Slider x:Name="PixelThresh" Width="240" Maximum="50" Minimum="10" ValueChanged="PixelThresh_ValueChanged" Value="30" />
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
                 <TextBlock Text="Manual threshold"/>
-                <Slider x:Name="ImageThresh" Width="240" Minimum="280000" Maximum="306000" ValueChanged="ImageThresh_ValueChanged" Value="295000" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="20,0,138,0" Height="24">
-                <TextBlock Text="Pixel: "/>
-                <TextBlock x:Name="PixelThresVal" Text="Loading "/>
+                <Slider x:Name="ImageThresh" Width="240" Minimum="280000" Maximum="306000" ValueChanged="ImageThresh_ValueChanged" Value="295000" Height="92" />
             </StackPanel>
             <StackPanel Orientation="Horizontal"  Margin="20,0,154,0" Height="24">
-                <TextBlock Text="Image: "/>
+                <TextBlock Text="Manual Value: "/>
                 <TextBlock x:Name="ImageThresVal" Text="Loading "/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Height="72">
