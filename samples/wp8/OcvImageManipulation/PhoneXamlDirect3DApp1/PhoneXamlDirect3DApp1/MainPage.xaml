@@ -21,7 +21,9 @@
                    Checked="RadioButton_Checked"/>
             <RadioButton x:Name="MotionOff" Content="Turn Off Motion Detector" GroupName="Group1" 
             	Checked="RadioButton_Checked" IsChecked="True"/>
-
+            <StackPanel Orientation="Horizontal" Margin="20,0,0,0" Height="71">
+                <Button x:Name="Background_Button" Width="216" Content="Set Background" Click="Background_Button_Click" />
+            </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
                 <TextBlock Text="Memory: "/>
                 <TextBlock x:Name="MemoryTextBlock"/>

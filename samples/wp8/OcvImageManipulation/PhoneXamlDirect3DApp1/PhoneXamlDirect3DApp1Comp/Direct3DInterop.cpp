@@ -127,7 +127,7 @@ namespace PhoneXamlDirect3DApp1Comp
 						//diffImg(matOlder, matOld, mat, matdiff);	//looks for motion in the last three frames
 						diffImg(matback, mat, matdiff);	//looks for motion vs background frame
 
-						ShiftBackground(mat,matback,0.35f);	//Move the background image a little closer to the current image
+						ShiftBackground(mat,matback,0.5f);	//Move the background image a little closer to the current image
 						
 						ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
 						const int bins = 15;

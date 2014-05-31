@@ -20,6 +20,7 @@ using System.Windows.Threading;
 using Microsoft.Phone.Info;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows.Media;
 
 namespace PhoneXamlDirect3DApp1
 {
@@ -134,9 +135,13 @@ namespace PhoneXamlDirect3DApp1
                 wb.SaveJpeg(fileStream, wb.PixelWidth, wb.PixelHeight, 100, 100);
                 fileStream.Seek(0, SeekOrigin.Begin);
 
+                //var rotatedStream = RotateStream(fileStream, 90);
+                //fileStream.Seek(0, SeekOrigin.Begin);
+
                 string name = "motion "+ DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff");
 
-               library.SavePictureToCameraRoll(name, fileStream);
+                //library.SavePictureToCameraRoll(name, rotatedStream);
+                library.SavePictureToCameraRoll(name, fileStream);
             });
 
         }
@@ -181,6 +186,11 @@ namespace PhoneXamlDirect3DApp1
                     motionCaptureEnabled = false;
                     break;
             }
+        }
+        
+        private void Background_Button_Click(object sender, RoutedEventArgs e)
+        {
+            m_d3dInterop.SetBackground();
         }
 
         private void timer_Tick(object sender, EventArgs e)
@@ -258,6 +268,49 @@ namespace PhoneXamlDirect3DApp1
                 ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
             }
         }
+        private Stream RotateStream(Stream stream, int angle)
+          {
+              stream.Position = 0;
+              if (angle % 90 != 0 || angle < 0) throw new ArgumentException();
+              if (angle % 360 == 0) return stream;
+   
+              BitmapImage bitmap = new BitmapImage();
+              bitmap.SetSource(stream);
+              WriteableBitmap wbSource = new WriteableBitmap(bitmap);
+   
+              WriteableBitmap wbTarget = null;
+              if (angle % 180 == 0)
+              {
+                  wbTarget = new WriteableBitmap(wbSource.PixelWidth, wbSource.PixelHeight);
+              }
+              else
+              {
+                  wbTarget = new WriteableBitmap(wbSource.PixelHeight, wbSource.PixelWidth);
+              }
+   
+              for (int x = 0; x < wbSource.PixelWidth; x++)
+              {
+                  for (int y = 0; y < wbSource.PixelHeight; y++)
+                  {
+                      switch (angle % 360)
+                      {
+                          case 90:
+                              wbTarget.Pixels[(wbSource.PixelHeight - y - 1) + x * wbTarget.PixelWidth] = wbSource.Pixels[x + y * wbSource.PixelWidth];
+                              break;
+                          case 180:
+                              wbTarget.Pixels[(wbSource.PixelWidth - x - 1) + (wbSource.PixelHeight - y - 1) * wbSource.PixelWidth] = wbSource.Pixels[x + y * wbSource.PixelWidth];
+                              break;
+                          case 270:
+                              wbTarget.Pixels[y + (wbSource.PixelWidth - x - 1) * wbTarget.PixelWidth] = wbSource.Pixels[x + y * wbSource.PixelWidth];
+                              break;
+                      }
+                  }
+              }
+              MemoryStream targetStream = new MemoryStream();
+              wbTarget.SaveJpeg(targetStream, wbTarget.PixelWidth, wbTarget.PixelHeight, 0, 100);
+              return targetStream;
+          }
+
 
         #region Machine Learning Stuffs
         // This is what starts all the fun!
@@ -403,6 +456,7 @@ namespace PhoneXamlDirect3DApp1
             return v;
         }
         #endregion
+
 
     }       
 }
