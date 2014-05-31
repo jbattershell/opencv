@@ -15,59 +15,87 @@
 
     <!--LayoutRoot is the root grid where all page content is placed-->
     <Grid x:Name="LayoutRoot" Background="Transparent">
-        <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" />
-        <StackPanel Margin="40">
-            <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
-                   Checked="RadioButton_Checked"/>
-            <RadioButton x:Name="MotionOff" Content="Turn Off Motion Detector" GroupName="Group1" 
+        <Grid.Resources>
+        </Grid.Resources>
+        <phone:Panorama>
+            <phone:Panorama.Title>
+                <TextBlock Text="Creeper Cam" FontSize="30" Margin="0,76,0,0"/>
+            </phone:Panorama.Title>
+            <phone:PanoramaItem>
+                <phone:PanoramaItem.Header>
+                    <TextBlock Text="Video" FontSize="20" Margin="0,0,0,0"/>
+                </phone:PanoramaItem.Header>
+                <phone:PanoramaItem.RenderTransform>
+                    <TranslateTransform/>
+                </phone:PanoramaItem.RenderTransform>
+
+                <Grid>
+                    <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" />
+                    <StackPanel Margin="10">
+                        <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
+                   Checked="RadioButton_Checked" Height="74"/>
+                        <RadioButton x:Name="MotionOff" Content="Turn Off Motion Detector" GroupName="Group1" 
             	Checked="RadioButton_Checked" IsChecked="True"/>
-            <StackPanel Orientation="Horizontal" Margin="20,0,0,0" Height="71">
-                <Button x:Name="Background_Button" Width="216" Content="Set Background" Click="Background_Button_Click" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
-                <TextBlock Text="Memory: "/>
-                <TextBlock x:Name="MemoryTextBlock"/>
-                <TextBlock Text=" MB"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Peak Memory: "/>
-                <TextBlock x:Name="PeakMemoryTextBlock"/>
-                <TextBlock Text=" MB"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text=""/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Low Motion Count: "/>
-                <TextBlock x:Name="MotionOutput"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Motion Seen: "/>
-                <TextBlock x:Name="LearnedOutput"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                <TextBlock Text="Manual threshold"/>
-                <Slider x:Name="ImageThresh" Width="240" Minimum="280000" Maximum="306000" ValueChanged="ImageThresh_ValueChanged" Value="295000" Height="92" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal"  Margin="20,0,154,0" Height="24">
-                <TextBlock Text="Manual Value: "/>
-                <TextBlock x:Name="ImageThresVal" Text="Loading "/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Height="72">
-                <RadioButton x:Name="TrainingOff" Content="Off" GroupName="Group2"
+                        <StackPanel Orientation="Horizontal" Margin="20,0,0,0" Height="71">
+                            <Button x:Name="Background_Button" Width="216" Content="Set Background" Click="Background_Button_Click" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+                            <TextBlock Text="Memory: "/>
+                            <TextBlock x:Name="MemoryTextBlock"/>
+                            <TextBlock Text=" MB"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
+                            <TextBlock Text="Peak Memory: "/>
+                            <TextBlock x:Name="PeakMemoryTextBlock"/>
+                            <TextBlock Text=" MB"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
+                            <TextBlock Text=""/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
+                            <TextBlock Text="Low Motion Count: "/>
+                            <TextBlock x:Name="MotionOutput"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
+                            <TextBlock Text="Motion Seen: "/>
+                            <TextBlock x:Name="LearnedOutput"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
+                            <TextBlock Text="Manual threshold"/>
+                            <Slider x:Name="ImageThresh" Width="240" Minimum="280000" Maximum="306000" ValueChanged="ImageThresh_ValueChanged" Value="295000" Height="90" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"  Margin="20,0,34,0" Height="26">
+                            <TextBlock Text="Manual Value: "/>
+                            <TextBlock x:Name="ImageThresVal" Text="Loading "/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="72">
+                            <RadioButton x:Name="TrainingOff" Content="Off" GroupName="Group2" FontSize="20" 
                    Checked="Training_Checked" IsChecked="True"/>
-                <RadioButton x:Name="TrainingPos" Content="Motion" GroupName="Group2" 
+                            <RadioButton x:Name="TrainingPos" Content="Motion" GroupName="Group2" FontSize="20" 
                    Checked="Training_Checked" />
-                <RadioButton x:Name="TrainingNeg" Content="Still" GroupName="Group2" 
+                            <RadioButton x:Name="TrainingNeg" Content="Still" GroupName="Group2"  FontSize="20" 
                    Checked="Training_Checked" />
 
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Height="71">
-                <Button x:Name="ModelLearn" Click="learnButton_Click" Width="126" Content="Learn" />
-                <TextBlock x:Name="learnOutput" Text="No Learn Started "/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="71">
+                            <Button x:Name="ModelLearn" Click="learnButton_Click" Width="126" Content="Learn" />
+                            <TextBlock x:Name="learnOutput" Text="No Learn Started "/>
 
-            </StackPanel>
-        </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </phone:PanoramaItem>
+            <phone:PanoramaItem CacheMode="{x:Null}" Header="item2">
+                <phone:PanoramaItem.RenderTransform>
+                    <TranslateTransform/>
+                </phone:PanoramaItem.RenderTransform>
+                <Grid>
+
+                </Grid>
+            </phone:PanoramaItem>
+        </phone:Panorama>
+
+
     </Grid>
 
 </phone:PhoneApplicationPage>
