@@ -147,9 +147,25 @@
     <Content Include="SplashScreenImage.jpg" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\CSharpFFTW\CSharpFFTW.vcxproj">
+      <Project>{CCB70514-0C8B-4E37-9536-8E1821B3FB97}</Project>
+      <Name>CSharpFFTW</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libflac_wrapper\libflac_wrapper.vcxproj">
+      <Project>{43035B02-B54C-4DA5-88ED-DEFE3BF3D2AD}</Project>
+      <Name>libflac_wrapper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libsound\libsound.vcxproj">
+      <Project>{618A9D16-7E75-4F32-91AF-23F7A8572F6F}</Project>
+      <Name>libsound</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\libsvm\libsvm.csproj">
       <Project>{04647899-06D3-494E-A670-F25E17BF6B70}</Project>
       <Name>libsvm</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\LineGraph\LineGraph.vcxproj">
+      <Project>{FDBDE3C0-ACDE-4D42-8E7A-DBF8D6D76055}</Project>
+      <Name>LineGraph</Name>
     </ProjectReference>
     <ProjectReference Include="..\PhoneXamlDirect3DApp1Comp\PhoneXamlDirect3DApp1Comp.vcxproj">
       <Name>PhoneXamlDirect3DApp1Comp</Name>
@@ -160,6 +176,13 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>AppResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Live, Version=5.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Live.Controls, Version=5.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\packages\Newtonsoft.Json.4.5.11\lib\sl3-wp\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).$(TargetFrameworkVersion).Overrides.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).CSharp.targets" />

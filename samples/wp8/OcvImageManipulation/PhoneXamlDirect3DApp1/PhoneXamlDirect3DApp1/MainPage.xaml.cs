@@ -22,10 +22,29 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Media;
 
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using System.IO.IsolatedStorage;
+
+using Microsoft.Live;
+using Microsoft.Live.Controls;
+
+using libflac_wrapper;
+using libsound;
+using LineGraph;
+using CSharpFFTW;
+
+using System.Threading.Tasks;
+using System.Windows.Documents;
+using Windows.Storage.Streams;
+
+using Newtonsoft.Json;
+
 namespace PhoneXamlDirect3DApp1
 {
     public partial class MainPage : PhoneApplicationPage
     {
+        #region Video Variables
         private Direct3DInterop m_d3dInterop = new Direct3DInterop();
         private DispatcherTimer m_timer;
         MediaLibrary library = new MediaLibrary();
@@ -46,6 +65,74 @@ namespace PhoneXamlDirect3DApp1
         // These are the list of recording objects
         ObservableCollection<float> posRecordings = new ObservableCollection<float>();
         ObservableCollection<float> negRecordings = new ObservableCollection<float>();
+
+        #endregion
+
+
+        #region Audio Classes
+        ///////////this is code for google stuff//////////////////
+        // These classes made from http://json2csharp.com/
+        public class Alternative
+        {
+            public string transcript { get; set; }
+            public double confidence { get; set; }
+        }
+
+        public class Result
+        {
+            public List<Alternative> alternative { get; set; }
+            public bool final { get; set; }
+        }
+
+        public class RecognitionResult
+        {
+            public List<Result> result { get; set; }
+            public int result_index { get; set; }
+        }
+        /// ///////this is code for google stuff///////////////////
+        #endregion
+
+
+        #region Audio Variables
+        //this is for C++ FFTW
+        //SoundIO sio = null;
+        AudioTool at = null;
+        LineGraphInterop freqGraph = null;
+        FFTW fftw = null;
+        //this is for C++ FFTW
+
+        private Microphone microphone = Microphone.Default;     // Object representing the physical microphone on the device
+        private byte[] buffer;                                  // Dynamic buffer to retrieve audio data from the microphone
+        private MemoryStream stream = new MemoryStream();       // Stores the audio data for later playback
+        private SoundEffectInstance soundInstance;              // Used to play back audio
+        private bool soundIsPlaying = false;                    // Flag to monitor the state of sound playback
+
+        // we give our file a filename
+        private string strSaveName;
+
+        //Scale the volume
+        int volumeScale = 1;
+
+        // Status images
+        private BitmapImage blankImage;
+        private BitmapImage microphoneImage;
+        private BitmapImage speakerImage;
+
+        // SkyDrive session
+        private LiveConnectClient client;
+
+        //////This is code for google stuff//////////////////////////
+        // This is the object we'll record data into
+        private libFLAC lf = new libFLAC();
+        private SoundIO sio = new SoundIO();
+
+        // This is our list of float[] chunks that we're keeping track of
+        private List<float[]> recordedAudio = new List<float[]>();
+
+        // This is our flag as to whether or not we're currently recording
+        private bool recording = false;
+        //////This is code for google stuff//////////////////////////
+        #endregion
 
         // Constructor
         public MainPage()
