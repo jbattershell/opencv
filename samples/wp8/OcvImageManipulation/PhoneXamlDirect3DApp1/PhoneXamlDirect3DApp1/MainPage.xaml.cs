@@ -195,7 +195,7 @@ namespace PhoneXamlDirect3DApp1
 
         private void timer_Tick(object sender, EventArgs e)
         {
-
+            //
             //////////////////////////////////
             //Capture training data
 
