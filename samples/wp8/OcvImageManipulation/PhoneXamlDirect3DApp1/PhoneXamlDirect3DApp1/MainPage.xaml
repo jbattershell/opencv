@@ -85,11 +85,30 @@
                     </StackPanel>
                 </Grid>
             </phone:PanoramaItem>
-            <phone:PanoramaItem CacheMode="{x:Null}" Header="item2">
+            <phone:PanoramaItem>
+                <phone:PanoramaItem.Header>
+                    <TextBlock Text="Audio" FontSize="20" Margin="0,0,0,0"/>
+                </phone:PanoramaItem.Header>
                 <phone:PanoramaItem.RenderTransform>
                     <TranslateTransform/>
                 </phone:PanoramaItem.RenderTransform>
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel x:Name="MainPanel" Grid.Row="0" Margin="12,17,0,28">
+                        <TextBlock x:Name="ApplicationTitle" Text="WINDOWS PHONE MICROPHONE SAMPLE" Style="{StaticResource PhoneTextNormalStyle}"/>
+                        <TextBlock x:Name="UserHelp" Text="press record" Margin="9,-7,0,0" Style="{StaticResource PhoneTextTitle1Style}" Height="50" />
+                    </StackPanel>
+                    <Controls:SignInButton HorizontalAlignment="Left" Margin="12,259,0,0" Grid.Row="1" VerticalAlignment="Top" Content="Button" Name="skydrive" Scopes="wl.basic wl.signin wl.offline_access wl.skydrive_update" SessionChanged="skydrive_SessionChanged" ClientId="00000000480D3C22" Height="99"/>
+
+
+                    <TextBlock x:Name="textOutput" HorizontalAlignment="Left" Margin="216,301,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="237" Height="99"/>
+                    <TextBlock x:Name="textOutTranscript" HorizontalAlignment="Left" Margin="30,171,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="125" Width="410"/>
+                    <DrawingSurface x:Name="freqCanvas" HorizontalAlignment="Left" Height="171" Margin="30,0,0,0" VerticalAlignment="Top" Width="423" Loaded="freqCanvas_Loaded" Grid.Row="1"/>
+                    <!--ContentPanel - place additional content here-->
 
                 </Grid>
             </phone:PanoramaItem>
