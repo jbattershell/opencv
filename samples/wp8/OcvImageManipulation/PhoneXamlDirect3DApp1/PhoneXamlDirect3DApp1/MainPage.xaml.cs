@@ -131,6 +131,7 @@ namespace PhoneXamlDirect3DApp1
 
         // This is our flag as to whether or not we're currently recording
         private bool recording = false;
+        private bool processing = false;
         //////This is code for google stuff//////////////////////////
         #endregion
 
@@ -578,7 +579,7 @@ namespace PhoneXamlDirect3DApp1
         }
         #endregion
 
-        
+
 
         //new version of this function for images
         private async void uploadFile(string strSaveName, Stream fileStream)
@@ -600,6 +601,13 @@ namespace PhoneXamlDirect3DApp1
         }
 
         #region Audio Functions
+        
+        /// <summary>
+        /// Updates the XNA FrameworkDispatcher and checks to see if a sound is playing.
+        /// If sound has stopped playing, it updates the UI.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void dt_Tick(object sender, EventArgs e)
         {
             try { FrameworkDispatcher.Update(); }
@@ -616,7 +624,7 @@ namespace PhoneXamlDirect3DApp1
                     // sound has stopped playing
                     SetButtonStates(true, true, false);
                     UserHelp.Text = "press play\nor record";
-
+                  
                 }
             }
         }
@@ -656,6 +664,7 @@ namespace PhoneXamlDirect3DApp1
         /// <param name="e"></param>
         private void recordButton_Click(object sender, EventArgs e)
         {
+            /*
             // Get audio data in 1/2 second chunks
             microphone.BufferDuration = TimeSpan.FromMilliseconds(500);
 
@@ -672,9 +681,10 @@ namespace PhoneXamlDirect3DApp1
 
             SetButtonStates(false, false, true);
             UserHelp.Text = "record";
-
+          
             //google stuff
             startRecording();
+             */
 
         }
 
@@ -697,7 +707,6 @@ namespace PhoneXamlDirect3DApp1
 
                 //google stuff
                 stopRecording();
-
 
             }
             else if (soundInstance.State == SoundState.Playing)
@@ -725,8 +734,7 @@ namespace PhoneXamlDirect3DApp1
                 // Update the UI to reflect that
                 // sound is playing
                 SetButtonStates(false, false, true);
-                UserHelp.Text = "play";
-
+                UserHelp.Text = "play";         
 
                 // Play the audio in a new thread so the UI can update.
                 Thread soundThread = new Thread(new ThreadStart(playSound));
@@ -898,6 +906,7 @@ namespace PhoneXamlDirect3DApp1
                         //LiveOperationResult uploadOperation = await client.BackgroundUploadAsync("me/skydrive", new Uri("/shared/transfers/" + strSaveName, UriKind.Relative), OverwriteOption.Overwrite);
                         LiveOperationResult uploadOperation = await this.client.UploadAsync("me/skydrive", strSaveName, fileStream, OverwriteOption.Overwrite);
                         //LiveOperationResult uploadResult = await uploadOperation.StartAsync();
+                        
                         textOutput.Text = "File " + strSaveName + " uploaded";
                     }
 
@@ -908,14 +917,13 @@ namespace PhoneXamlDirect3DApp1
                 }
             }
         }
-
-
-        //Code for C++ FFT running
+ 
+//Code for C++ FFT running
 
         // This hookup needs to happen in order to draw out to the FreqCanvas
         private void freqCanvas_Loaded(object sender, RoutedEventArgs e)
         {
-            //// Create our freqGraph!
+            // Create our freqGraph!
             //this.freqGraph = new LineGraphInterop();
 
             //// Set window bounds in dips
@@ -948,25 +956,24 @@ namespace PhoneXamlDirect3DApp1
             sio.start();
         }
 
-        /*
-                // This gets called every time we have a new event in C++
-                void sio_audioInEvent(float[] data)
-                {
-                    // If we haven't already initialized our fftw object, do so with the length of the data we will be analyzing
-                    if (fftw == null)
-                        fftw = new FFTW((uint)data.Length);
+/*
+        // This gets called every time we have a new event in C++
+        void sio_audioInEvent(float[] data)
+        {
+            // If we haven't already initialized our fftw object, do so with the length of the data we will be analyzing
+            if (fftw == null)
+                fftw = new FFTW((uint)data.Length);
 
-                    // Calculate a Complex array!  What fun!
-                    Complex[] DATA = fftw.fft(data);
+            // Calculate a Complex array!  What fun!
+            Complex[] DATA = fftw.fft(data);
 
-                    // Output waveform to LineGraph!
-                    freqGraph.setArray(fftw.fftMag(data));
+            // Output waveform to LineGraph!
+            freqGraph.setArray(fftw.fftMag(data));
 
-                }
-        */
+        }
+*/
 
-        //End of C++ for FFT running
-
+//End of C++ for FFT running
 
         ///////this is the google code part
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -974,7 +981,7 @@ namespace PhoneXamlDirect3DApp1
             base.OnNavigatedTo(e);
 
             // Setup SoundIO right away
-            // sio.audioInEvent += sio_audioInEvent;
+           // sio.audioInEvent += sio_audioInEvent;
             //sio.start();
         }
 
@@ -987,11 +994,10 @@ namespace PhoneXamlDirect3DApp1
                 recordedAudio.Add(data);
 
                 // If we're reached our maximum recording limit....
-                if (recordedAudio.Count == 500)
+                if (recordedAudio.Count == 1000) //10 sec worth
                 {
                     // We stop ourselves! :P
                     stopRecording();
-
                 }
             }
 
@@ -1000,7 +1006,16 @@ namespace PhoneXamlDirect3DApp1
                 fftw = new FFTW((uint)data.Length);
 
             // Calculate a Complex array!  What fun!
-            Complex[] DATA = fftw.fft(data);
+              Complex[] DATA = fftw.fft(data);
+
+              for (int i = 0; i < DATA.Length; i++)
+            {
+                if (this.recording == false && this.processing == false && (DATA[i].real * DATA[i].real + DATA[i].imag * DATA[i].imag) > 60)
+                {
+                    startRecording();
+                    break;
+                }
+            }
 
             // Output waveform to LineGraph!
             //freqGraph.setArray(fftw.fftMag(data));
@@ -1010,24 +1025,53 @@ namespace PhoneXamlDirect3DApp1
         // This gets called when the button gets pressed while it says "Go"
         private void startRecording()
         {
+            // Get audio data in 1/2 second chunks
+            microphone.BufferDuration = TimeSpan.FromMilliseconds(500);
+
+            // Allocate memory to hold the audio data
+            buffer = new byte[microphone.GetSampleSizeInBytes(microphone.BufferDuration)];
+
+            // Set the stream back to zero in case there is already something in it
+            stream.SetLength(0);
+
+            WriteWavHeader(stream, microphone.SampleRate);
+
+            // Start recording
+            microphone.Start();
+
+           // SetButtonStates(false, false, true);
+           // UserHelp.Text = "record";
+
             this.recording = true;
-            // this.goButton.Content = "Stop";
-            // this.textOutput.Text = "Recording...";
+
+            // Do this in a Dispatcher.BeginInvoke since we're not certain which thread is calling this function!
+            Dispatcher.BeginInvoke(() =>
+            {
+                this.textOutput.Text = "Recording...";
+             
+            });
         }
 
         // This gets called when the button gets pressed while it says "Stop" or when we reach
         // our maximum buffer amount (set to 10 seconds right now)
         private void stopRecording()
         {
-            this.recording = false;
+            microphone.Stop();
+            UpdateWavHeader(stream);
+            SaveToIsolatedStorage();
 
+            Dispatcher.BeginInvoke(() =>
+            {
+                this.textOutput.Text = "Uploading File...";
+                uploadFile();
+            });
+
+            this.recording = false;
 
             // Do this in a Dispatcher.BeginInvoke since we're not certain which thread is calling this function!
             Dispatcher.BeginInvoke(() =>
             {
                 this.textOutput.Text = "Processing...";
-                //  this.progress.Value = 0;
-                //   this.goButton.Content = "Go";
                 processData();
             });
         }
@@ -1041,7 +1085,6 @@ namespace PhoneXamlDirect3DApp1
             {
                 size += el.Length;
             }
-
 
             // Allocate the returning array
             T[] ret = new T[size];
@@ -1062,6 +1105,8 @@ namespace PhoneXamlDirect3DApp1
 
         private async void processData()
         {
+            this.processing = true;
+
             // First, convert our list of audio chunks into a flattened single array
             float[] rawData = flattenList(recordedAudio);
 
@@ -1075,25 +1120,31 @@ namespace PhoneXamlDirect3DApp1
             // Upload it to the server and get a response!
             RecognitionResult result = await recognizeSpeech(flacData, sio.getInputSampleRate());
 
-            // Check to make sure everything went okay, if it didn't, check the debug log!
-            if (result.result.Count != 0)
+
+            if (result.result != null)
             {
-                // This is just some fancy code to display each hypothesis as sone text that gets redder
-                // as our confidence goes down; note that I've never managed to get multiple hypotheses
-                this.textOutTranscript.Inlines.Clear();
-                foreach (var alternative in result.result[0].alternative)
+                // Check to make sure everything went okay, if it didn't, check the debug log!
+                if (result.result.Count != 0)
                 {
-                    Run run = new Run();
-                    run.Text = alternative.transcript + "\n\n";
-                    byte bg = (byte)(alternative.confidence * 255);
-                    run.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 255, bg, bg));
-                    textOutTranscript.Inlines.Add(run);
+                    // This is just some fancy code to display each hypothesis as sone text that gets redder
+                    // as our confidence goes down; note that I've never managed to get multiple hypotheses
+                    this.textOutTranscript.Inlines.Clear();
+                    foreach (var alternative in result.result[0].alternative)
+                    {
+                        Run run = new Run();
+                        run.Text = alternative.transcript + "\n\n";
+                        byte bg = (byte)(alternative.confidence * 255);
+                        run.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 255, bg, bg));
+                        textOutTranscript.Inlines.Add(run);
+                    }
+                }
+                else
+                {
+                    textOutTranscript.Text = "Errored out!";
                 }
             }
-            else
-            {
-                textOutTranscript.Text = "Errored out!";
-            }
+
+            this.processing = false;
 
         }
 
@@ -1105,11 +1156,9 @@ namespace PhoneXamlDirect3DApp1
                 string url = "https://www.google.com/speech-api/v2/recognize?output=json&lang=en-us&key=AIzaSyC-YKuxG4Pe5Xg1veSXtPPt3S3aKfzXDTM";
                 HttpWebRequest request = WebRequest.CreateHttp(url);
 
-
                 // Make sure we tell it what kind of data we're sending
                 request.ContentType = "audio/x-flac; rate=" + sampleRate;
                 request.Method = "POST";
-
 
                 // Actually write the data out to the stream!
                 using (var stream = await Task.Factory.FromAsync<Stream>(request.BeginGetRequestStream, request.EndGetRequestStream, null))
@@ -1117,10 +1166,8 @@ namespace PhoneXamlDirect3DApp1
                     await stream.WriteAsync(flacData, 0, flacData.Length);
                 }
 
-
                 // We are going to store our json response into this RecognitionResult:
                 RecognitionResult root = null;
-
 
                 // Now, we wait for a response and read it in:
                 using (var response = await Task.Factory.FromAsync<WebResponse>(request.BeginGetResponse, request.EndGetResponse, null))
@@ -1128,17 +1175,13 @@ namespace PhoneXamlDirect3DApp1
                     // Construct a datareader so we can read everything in as a string
                     DataReader dr = new DataReader(response.GetResponseStream().AsInputStream());
 
-
                     dr.InputStreamOptions = InputStreamOptions.Partial;
-
 
                     uint datalen = await dr.LoadAsync(1024 * 1024);
                     string responseStringsCombined = dr.ReadString(datalen);
 
-
                     // Split this response string by its newlines
                     var responseStrings = responseStringsCombined.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-
 
                     // Now, inspect the JSON of each string
                     foreach (var responseString in responseStrings)
@@ -1155,7 +1198,6 @@ namespace PhoneXamlDirect3DApp1
                     }
                 }
 
-
                 // Aaaaand, return the root object!
                 return root;
             }
@@ -1164,10 +1206,10 @@ namespace PhoneXamlDirect3DApp1
                 Debug.WriteLine("Error detected!  Exception thrown: " + e.Message);
             }
 
-
             // Otherwise, something failed, and we don't know what!
             return new RecognitionResult();
         }
+
 
         #endregion
     }       
