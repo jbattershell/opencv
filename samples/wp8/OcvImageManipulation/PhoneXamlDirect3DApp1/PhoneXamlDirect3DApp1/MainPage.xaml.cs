@@ -141,6 +141,7 @@ namespace PhoneXamlDirect3DApp1
             InitializeComponent();
 
             #region Video Init
+
             m_timer = new DispatcherTimer();
             m_timer.Interval = new TimeSpan(0, 0, 0, 0, 250);   //trigger timer up to 4x per second
             m_timer.Tick += new EventHandler(timer_Tick);
@@ -173,13 +174,16 @@ namespace PhoneXamlDirect3DApp1
             at = new AudioTool(sio.getOutputNumChannels(), sio.getOutputSampleRate());
 
             // Setup SoundIO right away
-            sio.audioInEvent += sio_audioInEvent;
+
+            //Jon turned off temporarily so I can work on video things while audio is broken
+            //sio.audioInEvent += sio_audioInEvent;
             //sio.start();
 
             #endregion
 
         }
 
+        #region Video Drawing Hookup
         private void DrawingSurface_Loaded(object sender, RoutedEventArgs e)
         {
             // Set window bounds in dips
@@ -205,7 +209,9 @@ namespace PhoneXamlDirect3DApp1
             m_d3dInterop.OnCaptureFrameReady += m_d3dInterop_OnCaptureFrameReady;
             m_d3dInterop.OnFrameReady += m_d3dInterop_OnFrameReady;
         }
+        #endregion
 
+        #region Video Processing Frame Ready Events
         void m_d3dInterop_OnFrameReady(float lowbin)
         {
             //Learned thresh eval
@@ -255,20 +261,23 @@ namespace PhoneXamlDirect3DApp1
                 wb.SaveJpeg(fileStream, wb.PixelWidth, wb.PixelHeight, 100, 100);
                 fileStream.Seek(0, SeekOrigin.Begin);
 
-                //var rotatedStream = RotateStream(fileStream, 90);
-                //fileStream.Seek(0, SeekOrigin.Begin);
+                var rotatedStream = new MemoryStream();
+                rotatedStream = RotateStream(fileStream, 90);
+                rotatedStream.Seek(0, SeekOrigin.Begin);
 
                 string name = "motion "+ DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff");
 
-                //library.SavePictureToCameraRoll(name, rotatedStream);
+                //library.SavePictureToCameraRoll(name, rotatedStream); //This saves a vertical orientation picture to photo reel
+                uploadFile(name, rotatedStream);   //This saves a vertical orientation picture to oneDrive
 
-                //library.SavePictureToCameraRoll(name, fileStream);
-                uploadFile(name, fileStream);
+                //library.SavePictureToCameraRoll(name, fileStream); //This saves a horizontal orientation picture to photo reel
+                //uploadFile(name, fileStream);   //This saves a horizontal orientation picture to oneDrive
             });
 
         }
+        #endregion
 
-
+        #region Video UI Handlers
         private void Training_Checked(object sender, RoutedEventArgs e)
         { 
             RadioButton rb = sender as RadioButton;
@@ -314,6 +323,7 @@ namespace PhoneXamlDirect3DApp1
         {
             m_d3dInterop.SetBackground();
         }
+        #endregion
 
         private void timer_Tick(object sender, EventArgs e)
         {
@@ -370,11 +380,11 @@ namespace PhoneXamlDirect3DApp1
                 MemoryTextBlock.Text = ex.Message;
             }
 
-            if (ImageThresh != null)    //update text
-            {
-                ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
+            //if (ImageThresh != null)    //update text
+            //{
+            //    ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
 
-            }
+            //}
 
             if (motionCaptureEnabled)
             {
@@ -382,15 +392,7 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
-        private void ImageThresh_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (ImageThresh != null)
-            {
-                m_d3dInterop.SetImageThreshold((int)ImageThresh.Value);
-                ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
-            }
-        }
-        private Stream RotateStream(Stream stream, int angle)
+        private MemoryStream RotateStream(MemoryStream stream, int angle)
           {
               stream.Position = 0;
               if (angle % 90 != 0 || angle < 0) throw new ArgumentException();
