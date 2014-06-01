@@ -12,6 +12,7 @@
 
 #include <opencv2\imgproc\types_c.h>
 
+using namespace Windows::Foundation;
 
 namespace PhoneXamlDirect3DApp1Comp
 {
@@ -110,6 +111,11 @@ private:
 	std::shared_ptr<cv::Mat> m_backgroundFrame;
     std::mutex m_mutex;
 
+	//Processing Thread Stuff
+	IAsyncAction^ threadHandle;
+	bool frameProcessingInProgress;
+	Direct3DInterop^ callingInstance;
+
 	int pixelThreshold;
 	int imageThreshold;
 	//int bins;
@@ -131,6 +137,18 @@ private:
 	void ApplySepiaFilter(cv::Mat* mat); 
 	void GetHist(cv::Mat* image, int bins, float binvals[]);
 	void ShiftBackground(cv::Mat* newframe, cv::Mat* backFrame, double scale);
+
+
+	void startProc();
+
+	// This pauses the thread
+	void stopProc();
+
+	// This is the function that gets run in a new thread
+	void thread( IAsyncAction^ operation );
+
+	//Pass in the call to trigger a new frame
+	void ProcessThisFrame(cv::Mat* matback, cv::Mat* mat, cv::Mat* matdiff);
 };
 
 class CameraCapturePreviewSink :
@@ -153,6 +171,7 @@ public:
 private:
     Direct3DInterop^ m_Direct3dInterop;
 };
+
 
 class CameraCaptureSampleSink :
 	public Microsoft::WRL::RuntimeClass<

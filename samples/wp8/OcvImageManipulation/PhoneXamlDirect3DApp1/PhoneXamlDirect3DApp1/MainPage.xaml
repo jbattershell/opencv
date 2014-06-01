@@ -91,15 +91,13 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel x:Name="MainPanel" Grid.Row="0" Margin="12,17,0,28">
-                        <TextBlock x:Name="ApplicationTitle" Text="WINDOWS PHONE MICROPHONE SAMPLE" Style="{StaticResource PhoneTextNormalStyle}"/>
-                        <TextBlock x:Name="UserHelp" Text="press record" Margin="9,-7,0,0" Style="{StaticResource PhoneTextTitle1Style}" Height="50" />
+                        <TextBlock x:Name="ApplicationTitle" Text="OneDrive and Audio Status" Style="{StaticResource PhoneTextNormalStyle}"/>
                     </StackPanel>
-                    <Controls:SignInButton HorizontalAlignment="Left" Margin="12,259,0,0" Grid.Row="1" VerticalAlignment="Top" Content="Button" Name="skydrive" Scopes="wl.basic wl.signin wl.offline_access wl.skydrive_update" SessionChanged="skydrive_SessionChanged" ClientId="00000000480D3C22" Height="99"/>
+                    <Controls:SignInButton HorizontalAlignment="Left" Margin="12,402,0,0" Grid.Row="1" VerticalAlignment="Top" Content="Button" Name="skydrive" Scopes="wl.basic wl.signin wl.offline_access wl.skydrive_update" SessionChanged="skydrive_SessionChanged" ClientId="00000000480D3C22" Height="99"/>
 
 
-                    <TextBlock x:Name="textOutput" HorizontalAlignment="Left" Margin="216,301,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="237" Height="99"/>
-                    <TextBlock x:Name="textOutTranscript" HorizontalAlignment="Left" Margin="30,171,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="125" Width="410"/>
-                    <DrawingSurface x:Name="freqCanvas" HorizontalAlignment="Left" Height="171" Margin="30,0,0,0" VerticalAlignment="Top" Width="423" Loaded="freqCanvas_Loaded" Grid.Row="1"/>
+                    <TextBlock x:Name="textOutput" HorizontalAlignment="Left" Margin="220,402,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="195" Height="99"/>
+                    <TextBlock x:Name="textOutTranscript" HorizontalAlignment="Left" Margin="0,10,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="163" Width="410"/>
                     <!--ContentPanel - place additional content here-->
 
                 </Grid>

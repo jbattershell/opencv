@@ -10,6 +10,7 @@
 #include <opencv2\features2d\features2d.hpp>
 #include <algorithm>
 #include "Frame.h"
+#include <windows.h>
 
 using namespace Windows::Storage::Streams;
 using namespace Microsoft::WRL;
@@ -22,6 +23,8 @@ using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Phone::Media::Capture;
 using namespace cv;
+using namespace Windows::System::Threading;
+using namespace Platform;
 
 #if !defined(_M_ARM)
 #pragma message("warning: Direct3DInterop.cpp: Windows Phone camera code does not run in the emulator.")
@@ -66,15 +69,19 @@ namespace PhoneXamlDirect3DApp1Comp
         , m_diffFrame(nullptr)
 		, pauseFrames (false)
     {
-		imageThreshold = 300000;
-		pixelThreshold = 40;
+		this->imageThreshold = 300000;
+		this->pixelThreshold = 40;
+		this->threadHandle = nullptr;
+		this->frameProcessingInProgress = false;
+		this->startProc();	//start processing frame so it is available
+
 		//bins = 15;
     }
 
     bool Direct3DInterop::SwapFrames()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(m_backFrame != nullptr)
+        if(m_backFrame != nullptr && !this->frameProcessingInProgress)	//If not still processing frame
         {
 			
             std::swap(m_frontMinus2Frame, m_frontMinus1Frame);	//oldest data goes to m_frontMinus2Frame
@@ -118,6 +125,9 @@ namespace PhoneXamlDirect3DApp1Comp
 				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
 				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
 
+						//if (
+						//this->startProc();	//start processing frame so it is available
+
 						if(m_getBackground)
 						{
 							memcpy(matback->data, mat->data, 4*mat->cols * mat->rows);
@@ -125,33 +135,39 @@ namespace PhoneXamlDirect3DApp1Comp
 						}
 						//ApplyBlurFilter(mat);
 						//diffImg(matOlder, matOld, mat, matdiff);	//looks for motion in the last three frames
-						diffImg(matback, mat, matdiff);	//looks for motion vs background frame
+						this->ProcessThisFrame(matback,mat,matdiff);
 
-						ShiftBackground(mat,matback,0.5f);	//Move the background image a little closer to the current image
-						
-						ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
-						const int bins = 15;
-						float binvals[bins];
-						GetHist(matdiff,bins,binvals);
 
-						bottombins = binvals[0];
+						//Move into Processing Thread
+						////////////////////////////////////////////////
+						//diffImg(matback, mat, matdiff);	//looks for motion vs background frame
 
-						////////////////////////////////////////////
-						//For machine learning capture mode
-							this->OnFrameReady(bottombins);
-						
-							//Send picture to C# code to save
-							if (m_captureFrame)
-							{
-								auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
-								this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
-							}
-						
-						////////////////////////////////////////////
+						//ShiftBackground(mat,matback,0.5f);	//Move the background image a little closer to the current image
+						//
+						//ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
+						//const int bins = 15;
+						//float binvals[bins];
+						//GetHist(matdiff,bins,binvals);
 
-						pixelThreshold=255/bins;
-						threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
-						m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
+						//bottombins = binvals[0];
+						//////////////////////////////////////////////////
+
+						//////////////////////////////////////////////
+						////For machine learning capture mode
+						//	this->OnFrameReady(bottombins);
+						//
+						//	//Send picture to C# code to save
+						//	if (m_captureFrame)
+						//	{
+						//		auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+						//		this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+						//	}
+						//
+						//////////////////////////////////////////////
+
+						//pixelThreshold=255/bins;
+						//threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
+						//m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
 			}
 		}
     }
@@ -496,4 +512,76 @@ namespace PhoneXamlDirect3DApp1Comp
     {
         return m_renderer->GetTexture();
     }
+
+	void Direct3DInterop::startProc() {
+		// Only start a new thread if we don't already have one running
+		if( this->threadHandle == nullptr )
+			this->threadHandle = ThreadPool::RunAsync( ref new WorkItemHandler(this, &Direct3DInterop::thread) );
+	}
+
+	void Direct3DInterop::stopProc() {
+		// Only stop a thread if we DO have one running
+		if( this->threadHandle != nullptr )
+			this->threadHandle->Cancel();
+	}
+
+
+	void Direct3DInterop::thread( IAsyncAction^ operation ) {
+		// Keep looping as long as the threadHandle doesn't think we've been canceled
+		while( (this->threadHandle->Status != Windows::Foundation::AsyncStatus::Canceled) ) //not canceled, have something to process
+		{
+			if (this->frameProcessingInProgress == true)
+			{
+				cv::Mat* mat = m_frontFrame.get();	//load in newest data
+				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
+				cv::Mat* matOlder = m_frontMinus2Frame.get();	//load in 2 frame old data
+				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
+				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
+
+				diffImg(matback, mat, matdiff);	//looks for motion vs background frame
+
+				ShiftBackground(mat,matback,0.5f);	//Move the background image a little closer to the current image
+						
+				ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
+				const int bins = 15;
+				float binvals[bins];
+				GetHist(matdiff,bins,binvals);
+
+				this->bottombins = binvals[0];
+				////////////////////////////////////////////
+				//For machine learning capture mode
+					this->OnFrameReady(bottombins);
+						
+					//Send picture to C# code to save
+					if (m_captureFrame)
+					{
+						auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+						this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+					}
+						
+				////////////////////////////////////////////
+
+				pixelThreshold=255/bins;
+				threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
+				m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
+
+
+				this->frameProcessingInProgress = false;
+			}
+		}
+
+		// Once we've been canceled, clean up the threadHandle resources
+		this->threadHandle->Close();
+		this->threadHandle = nullptr;
+	}
+
+	
+		//Pass in the call to trigger a new frame
+		void Direct3DInterop::ProcessThisFrame(cv::Mat* matback, cv::Mat* mat, cv::Mat* matdiff)
+		{
+			if(this->frameProcessingInProgress == false)	//check that it's not already working on another frame
+			{
+				this->frameProcessingInProgress = true;
+			}
+		}
 }

@@ -97,26 +97,20 @@ namespace PhoneXamlDirect3DApp1
         //this is for C++ FFTW
         //SoundIO sio = null;
         AudioTool at = null;
-        LineGraphInterop freqGraph = null;
+        
         FFTW fftw = null;
         //this is for C++ FFTW
 
         private Microphone microphone = Microphone.Default;     // Object representing the physical microphone on the device
         private byte[] buffer;                                  // Dynamic buffer to retrieve audio data from the microphone
         private MemoryStream stream = new MemoryStream();       // Stores the audio data for later playback
-        private SoundEffectInstance soundInstance;              // Used to play back audio
-        private bool soundIsPlaying = false;                    // Flag to monitor the state of sound playback
+        
 
         // we give our file a filename
         private string strSaveName;
 
         //Scale the volume
-        int volumeScale = 1;
-
-        // Status images
-        private BitmapImage blankImage;
-        private BitmapImage microphoneImage;
-        private BitmapImage speakerImage;
+        byte volumeScale = 1;
 
         // SkyDrive session
         private LiveConnectClient client;
@@ -131,7 +125,15 @@ namespace PhoneXamlDirect3DApp1
 
         // This is our flag as to whether or not we're currently recording
         private bool recording = false;
-        private bool processing = false;
+        private bool processing = false; 
+        private bool loggedIn = false;
+        private bool uploadComplete = true;
+
+        string googleText;
+
+        int quietCount = 0;
+
+        
         //////This is code for google stuff//////////////////////////
         #endregion
 
@@ -164,20 +166,17 @@ namespace PhoneXamlDirect3DApp1
             // Event handler for getting audio data when the buffer is full
             microphone.BufferReady += new EventHandler<EventArgs>(microphone_BufferReady);
 
-            blankImage = new BitmapImage(new Uri("Images/blank.png", UriKind.RelativeOrAbsolute));
-            microphoneImage = new BitmapImage(new Uri("Images/microphone.png", UriKind.RelativeOrAbsolute));
-            speakerImage = new BitmapImage(new Uri("Images/speaker.png", UriKind.RelativeOrAbsolute));
-
             //this is for C++ FFTW
             // Assuming that we don't know in general the number of output channels/samplerate,
             // we dynamically get those from SoundIO, and then must construct AudioTool in the constructor
             at = new AudioTool(sio.getOutputNumChannels(), sio.getOutputSampleRate());
 
             // Setup SoundIO right away
-
-            //Jon turned off temporarily so I can work on video things while audio is broken
-            //sio.audioInEvent += sio_audioInEvent;
+            sio.audioInEvent += sio_audioInEvent;
             //sio.start();
+
+            //load audio files into isolated storage
+            CopyToIsolatedStorage();
 
             #endregion
 
@@ -614,21 +613,6 @@ namespace PhoneXamlDirect3DApp1
         {
             try { FrameworkDispatcher.Update(); }
             catch { }
-
-            if (true == soundIsPlaying)
-            {
-                if (soundInstance.State != SoundState.Playing)
-                {
-                    // Audio has finished playing
-                    soundIsPlaying = false;
-
-                    // Update the UI to reflect that the 
-                    // sound has stopped playing
-                    SetButtonStates(true, true, false);
-                    UserHelp.Text = "press play\nor record";
-                  
-                }
-            }
         }
 
         /// <summary>
@@ -648,127 +632,17 @@ namespace PhoneXamlDirect3DApp1
             var tempArray = buffer;
             for (int i = 0; i < tempArray.Length; i++)
             {
-                tempArray[i] = (byte)((int)tempArray[i] * volumeScale);
+                byte tempOverflow = (byte)((int)tempArray[i] * (int)volumeScale);
+                if (tempArray[i] < tempOverflow)
+                {
+                    tempArray[i] = tempOverflow;
+                }
             }
 
             // Store the audio data in a stream
             //stream.Write(buffer, 0, buffer.Length);
             stream.Write(tempArray, 0, tempArray.Length);
 
-        }
-
-        /// <summary>
-        /// Handles the Click event for the record button.
-        /// Sets up the microphone and data buffers to collect audio data,
-        /// then starts the microphone. Also, updates the UI.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void recordButton_Click(object sender, EventArgs e)
-        {
-            /*
-            // Get audio data in 1/2 second chunks
-            microphone.BufferDuration = TimeSpan.FromMilliseconds(500);
-
-            // Allocate memory to hold the audio data
-            buffer = new byte[microphone.GetSampleSizeInBytes(microphone.BufferDuration)];
-
-            // Set the stream back to zero in case there is already something in it
-            stream.SetLength(0);
-
-            WriteWavHeader(stream, microphone.SampleRate);
-
-            // Start recording
-            microphone.Start();
-
-            SetButtonStates(false, false, true);
-            UserHelp.Text = "record";
-          
-            //google stuff
-            startRecording();
-             */
-
-        }
-
-        /// <summary>
-        /// Handles the Click event for the stop button.
-        /// Stops the microphone from collecting audio and updates the UI.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void stopButton_Click(object sender, EventArgs e)
-        {
-            if (microphone.State == MicrophoneState.Started)
-            {
-                // In RECORD mode, user clicked the 
-                // stop button to end recording
-                microphone.Stop();
-                UpdateWavHeader(stream);
-                SaveToIsolatedStorage();
-                uploadFile();
-
-                //google stuff
-                stopRecording();
-
-            }
-            else if (soundInstance.State == SoundState.Playing)
-            {
-                // In PLAY mode, user clicked the 
-                // stop button to end playing back
-                soundInstance.Stop();
-            }
-
-            SetButtonStates(true, true, false);
-            UserHelp.Text = "ready";
-
-        }
-
-        /// <summary>
-        /// Handles the Click event for the play button.
-        /// Plays the audio collected from the microphone and updates the UI.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void playButton_Click(object sender, EventArgs e)
-        {
-            if (stream.Length > 0)
-            {
-                // Update the UI to reflect that
-                // sound is playing
-                SetButtonStates(false, false, true);
-                UserHelp.Text = "play";         
-
-                // Play the audio in a new thread so the UI can update.
-                Thread soundThread = new Thread(new ThreadStart(playSound));
-                soundThread.Start();
-            }
-        }
-
-        /// <summary>
-        /// Plays the audio using SoundEffectInstance 
-        /// so we can monitor the playback status.
-        /// </summary>
-        private void playSound()
-        {
-            // Play audio using SoundEffectInstance so we can monitor it's State 
-            // and update the UI in the dt_Tick handler when it is done playing.
-            SoundEffect sound = new SoundEffect(stream.ToArray(), microphone.SampleRate, AudioChannels.Mono);
-            soundInstance = sound.CreateInstance();
-            soundIsPlaying = true;
-            soundInstance.Play();
-        }
-
-        /// <summary>
-        /// Helper method to change the IsEnabled property for the ApplicationBarIconButtons.
-        /// </summary>
-        /// <param name="recordEnabled">New state for the record button.</param>
-        /// <param name="playEnabled">New state for the play button.</param>
-        /// <param name="stopEnabled">New state for the stop button.</param>
-        private void SetButtonStates(bool recordEnabled, bool playEnabled, bool stopEnabled)
-        {
-            (ApplicationBar.Buttons[0] as ApplicationBarIconButton).IsEnabled = recordEnabled;
-            (ApplicationBar.Buttons[1] as ApplicationBarIconButton).IsEnabled = playEnabled;
-            (ApplicationBar.Buttons[2] as ApplicationBarIconButton).IsEnabled = stopEnabled;
         }
 
         private void SaveToIsolatedStorage()
@@ -888,11 +762,12 @@ namespace PhoneXamlDirect3DApp1
                 var jsonResult = operationResult.Result as dynamic;
                 string firstName = jsonResult.first_name ?? string.Empty;
                 string lastName = jsonResult.last_name ?? string.Empty;
-                textOutput.Text = "Welcome " + firstName + " " + lastName;
+                textOutTranscript.Text = "Welcome " + firstName + " " + lastName;
+                loggedIn = true;
             }
             catch (Exception e)
             {
-                textOutput.Text = e.ToString();
+                textOutTranscript.Text = e.ToString();
             }
         }
 
@@ -905,77 +780,34 @@ namespace PhoneXamlDirect3DApp1
                 {
                     try
                     {
+                        uploadComplete = false;
+
                         //LiveOperationResult uploadOperation = await client.BackgroundUploadAsync("me/skydrive", new Uri("/shared/transfers/" + strSaveName, UriKind.Relative), OverwriteOption.Overwrite);
                         LiveOperationResult uploadOperation = await this.client.UploadAsync("me/skydrive", strSaveName, fileStream, OverwriteOption.Overwrite);
                         //LiveOperationResult uploadResult = await uploadOperation.StartAsync();
-                        
-                        textOutput.Text = "File " + strSaveName + " uploaded";
+                        if (uploadOperation.Result != null)
+                        {
+                            uploadComplete = true;
+                        }
+                        Dispatcher.BeginInvoke(() =>
+                        {
+                            this.textOutput.Text = "File " + strSaveName + " uploaded";
+                        });
+
                     }
 
                     catch (Exception ex)
                     {
-                        textOutput.Text = "Error uploading photo: " + ex.Message;
+
+                        Dispatcher.BeginInvoke(() =>
+                        {
+                            this.textOutput.Text = "Error uploading photo: " + ex.Message;
+                        });
+
                     }
                 }
             }
         }
- 
-//Code for C++ FFT running
-
-        // This hookup needs to happen in order to draw out to the FreqCanvas
-        private void freqCanvas_Loaded(object sender, RoutedEventArgs e)
-        {
-            // Create our freqGraph!
-            //this.freqGraph = new LineGraphInterop();
-
-            //// Set window bounds in dips
-            //freqGraph.WindowBounds = new Windows.Foundation.Size(
-            //    (float)freqCanvas.ActualWidth,
-            //    (float)freqCanvas.ActualHeight
-            //    );
-
-            //// Set native resolution in pixels
-            //freqGraph.NativeResolution = new Windows.Foundation.Size(
-            //    (float)Math.Floor(freqCanvas.ActualWidth * Application.Current.Host.Content.ScaleFactor / 100.0f + 0.5f),
-            //    (float)Math.Floor(freqCanvas.ActualHeight * Application.Current.Host.Content.ScaleFactor / 100.0f + 0.5f)
-            //    );
-
-            //// Set render resolution to the full native resolution
-            //freqGraph.RenderResolution = freqGraph.NativeResolution;
-
-            //// Hook-up native component to DrawingSurface
-            //freqCanvas.SetContentProvider(freqGraph.CreateContentProvider());
-            //freqCanvas.SetManipulationHandler(freqGraph);
-
-            //// If you wish, you can set Y limits here and such (default is [-1, 1])
-            //freqGraph.setYLimits(0, 30);
-
-            //// Set the color of the line to be drawn
-            //freqGraph.setColor(1.0f, 100.0f, 0.0f);
-
-            // Start recording/playing!  This must happen after timeGraph has been initialized
-            // Otherwise, in sio_audioInEvent() we will attempt to call timeGraph.setArray() with disastrous results!
-            sio.start();
-        }
-
-/*
-        // This gets called every time we have a new event in C++
-        void sio_audioInEvent(float[] data)
-        {
-            // If we haven't already initialized our fftw object, do so with the length of the data we will be analyzing
-            if (fftw == null)
-                fftw = new FFTW((uint)data.Length);
-
-            // Calculate a Complex array!  What fun!
-            Complex[] DATA = fftw.fft(data);
-
-            // Output waveform to LineGraph!
-            freqGraph.setArray(fftw.fftMag(data));
-
-        }
-*/
-
-//End of C++ for FFT running
 
         ///////this is the google code part
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -983,8 +815,8 @@ namespace PhoneXamlDirect3DApp1
             base.OnNavigatedTo(e);
 
             // Setup SoundIO right away
-           // sio.audioInEvent += sio_audioInEvent;
-            //sio.start();
+            sio.audioInEvent += sio_audioInEvent;
+            sio.start();
         }
 
         void sio_audioInEvent(float[] data)
@@ -996,7 +828,7 @@ namespace PhoneXamlDirect3DApp1
                 recordedAudio.Add(data);
 
                 // If we're reached our maximum recording limit....
-                if (recordedAudio.Count == 1000) //10 sec worth
+                if (recordedAudio.Count == 10000) //10 sec worth
                 {
                     // We stop ourselves! :P
                     stopRecording();
@@ -1007,26 +839,86 @@ namespace PhoneXamlDirect3DApp1
             if (fftw == null)
                 fftw = new FFTW((uint)data.Length);
 
-            // Calculate a Complex array!  What fun!
-              Complex[] DATA = fftw.fft(data);
+            //Find the Frequency from the FFT result bins
+            //freqMax = bin * sampleRate / numSamplesToWrite;
+            uint binLow = 400 * (uint)data.Length / 48000; //low frequency of interest is 400
+            uint binHigh = 2000 * (uint)data.Length / 48000; //high frequency of interest is 2000
 
-              for (int i = 0; i < DATA.Length; i++)
+            // Calculate a Complex array!  What fun!
+            Complex[] DATA = fftw.fft(data);
+
+            //if (this.recording == false && this.processing == false && loggedIn == true && uploadComplete == true)
+            if (this.recording == false && loggedIn == true)
             {
-                if (this.recording == false && this.processing == false && (DATA[i].real * DATA[i].real + DATA[i].imag * DATA[i].imag) > 60)
+                for (uint i = binLow; i < binHigh; i++)
                 {
-                    startRecording();
-                    break;
+                    if ((DATA[i].real * DATA[i].real + DATA[i].imag * DATA[i].imag) > 60)
+                    {
+
+                        playAudio();
+
+                        Dispatcher.BeginInvoke(() =>
+                        {
+                            textOutput.Text = "Trigger Freq: " + i * 48000 / (uint)data.Length;
+                        });
+                        startRecording();
+                        break;
+                    }
                 }
             }
 
-            // Output waveform to LineGraph!
-            //freqGraph.setArray(fftw.fftMag(data));
+            if (this.recording == true)
+            {
+                for (uint i = binLow; i < binHigh; i++)
+                {
+                    if (((DATA[i].real * DATA[i].real + DATA[i].imag * DATA[i].imag) > 60))
+                    {
+                        quietCount = 0;
+                        break;
+                    }
+                }
+
+                quietCount++;
+
+                if (quietCount > 1000)
+                {
+                    quietCount = 0;
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        textOutput.Text = "Audio no longer detected";
+                    });
+
+                    stopRecording();
+                }
+
+            }
 
         }
+
+        private void playAudio()
+        {
+
+            // Play the audio in a new thread so the UI can update.
+            Thread soundThread = new Thread(new ThreadStart(playSound));
+            soundThread.Start();
+        }
+
+        private void playSound()
+        {
+            // Play audio using SoundEffectInstance so we can monitor it's State 
+            // and update the UI in the dt_Tick handler when it is done playing.         
+            //SoundEffect sound = new SoundEffect(info, microphone.SampleRate, AudioChannels.Mono);
+            SoundEffect sound;
+            //sound = Content.Load<SoundEffect>("Hellooo");
+            //sound.Play();
+        }
+
 
         // This gets called when the button gets pressed while it says "Go"
         private void startRecording()
         {
+            m_d3dInterop.pauseVideo();
+
             // Get audio data in 1/2 second chunks
             microphone.BufferDuration = TimeSpan.FromMilliseconds(500);
 
@@ -1041,16 +933,13 @@ namespace PhoneXamlDirect3DApp1
             // Start recording
             microphone.Start();
 
-           // SetButtonStates(false, false, true);
-           // UserHelp.Text = "record";
-
             this.recording = true;
 
             // Do this in a Dispatcher.BeginInvoke since we're not certain which thread is calling this function!
             Dispatcher.BeginInvoke(() =>
             {
-                this.textOutput.Text = "Recording...";
-             
+                this.textOutTranscript.Text = "Recording...";
+
             });
         }
 
@@ -1064,9 +953,10 @@ namespace PhoneXamlDirect3DApp1
 
             Dispatcher.BeginInvoke(() =>
             {
-                this.textOutput.Text = "Uploading File...";
-                uploadFile();
+                this.textOutTranscript.Text = "Uploading File...";
             });
+            uploadFile();
+            //recordedAudio.Clear();
 
             this.recording = false;
 
@@ -1076,7 +966,41 @@ namespace PhoneXamlDirect3DApp1
                 this.textOutput.Text = "Processing...";
                 processData();
             });
+
         }
+
+        private void CopyToIsolatedStorage()
+        {
+            return; //I don't have hello.wav right now
+            using (IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication())
+            {
+                string[] files = new string[] { "Hellooo.wav" };
+
+                foreach (var _fileName in files)
+                {
+                    if (!storage.FileExists(_fileName))
+                    {
+                        string _filePath = "Audio/" + _fileName;
+                        StreamResourceInfo resource = Application.GetResourceStream(new Uri(_filePath, UriKind.Relative));
+
+                        using (IsolatedStorageFileStream file = storage.CreateFile(_fileName))
+                        {
+                            int chunkSize = 4096;
+                            byte[] bytes = new byte[chunkSize];
+                            int byteCount;
+
+                            while ((byteCount = resource.Stream.Read(bytes, 0, chunkSize)) > 0)
+                            {
+                                file.Write(bytes, 0, byteCount);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
 
         // This is a utility to take a list of arrays and mash them all together into one large array
         private T[] flattenList<T>(List<T[]> list)
@@ -1138,12 +1062,42 @@ namespace PhoneXamlDirect3DApp1
                         byte bg = (byte)(alternative.confidence * 255);
                         run.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 255, bg, bg));
                         textOutTranscript.Inlines.Add(run);
+                        if (alternative.confidence * 100 + 1 > 0)
+                        {
+                            googleText = alternative.transcript;
+                            IsolatedStorageFile store = IsolatedStorageFile.GetUserStoreForApplication();
+                            // we give our file a filename
+                            string strSaveNameTemp = "transcript_" + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss") + ".txt";
+
+                            // Declare a new StreamWriter.
+                            StreamWriter writer = null;
+
+                            // Assign the writer to the store and the file TestStore.
+                            writer = new StreamWriter(new IsolatedStorageFileStream(
+                                strSaveNameTemp, FileMode.CreateNew, store));
+
+                            // Have the writer write "Hello Isolated Storage" to the store.
+                            writer.WriteLine(googleText);
+
+                            writer.Close();
+
+                            var fileStreamTemp = store.OpenFile(strSaveNameTemp, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                            uploadFile(strSaveNameTemp, fileStreamTemp);
+                            textOutTranscript.Text = "Transcript Uploaded";
+                            break;
+                        }
                     }
+
                 }
                 else
                 {
                     textOutTranscript.Text = "Errored out!";
                 }
+            }
+            else
+            {
+                textOutTranscript.Text = "Google return bad!";
             }
 
             this.processing = false;
@@ -1189,7 +1143,6 @@ namespace PhoneXamlDirect3DApp1
                     foreach (var responseString in responseStrings)
                     {
                         root = JsonConvert.DeserializeObject<RecognitionResult>(responseString);
-
 
                         // If this is a good result
                         if (root.result.Count != 0)
