@@ -95,7 +95,7 @@ private:
     void ProcessFrame();
     bool SwapFrames();
 	
-	static const int NUMOFBINS = 5;
+	static const int NUMOFBINS = 15;
 	float motionBins[NUMOFBINS];
 
 	QuadRenderer^ m_renderer;

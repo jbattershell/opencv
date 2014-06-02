@@ -375,7 +375,10 @@ namespace PhoneXamlDirect3DApp1
                 value = DeviceStatus.ApplicationPeakMemoryUsage / (1024.0f * 1024.0f);
                 PeakMemoryTextBlock.Text = value.ToString();
 
-                MotionOutput.Text = m_d3dInterop.LowMotionBins().ToString();
+                float[] bins = m_d3dInterop.MotionBins();
+                string motionoutput = bins[0].ToString() + ", " + bins[1].ToString() + ", " + bins[2].ToString() + "\n" + bins[3].ToString() + ", " + bins[4].ToString();
+                MotionOutput.Text = motionoutput;
+                //MotionOutput.Text = m_d3dInterop.LowMotionBins().ToString();
                 LearnedOutput.Text = m_d3dInterop.MotionStatus().ToString();
 
             }

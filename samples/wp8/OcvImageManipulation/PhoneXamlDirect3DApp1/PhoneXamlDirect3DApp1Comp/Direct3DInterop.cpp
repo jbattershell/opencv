@@ -548,11 +548,14 @@ namespace PhoneXamlDirect3DApp1Comp
 				ShiftBackground(mat,matback,0.5f);	//Move the background image a little closer to the current image
 						
 				ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
-				const int bins = 15;
-				float binvals[bins];
-				GetHist(matdiff,bins,binvals);
+				//const int bins = 15;
+				//float binvals[NUMOFBINS];
+				//GetHist(matdiff,bins,binvals);
 
-				this->bottombins = binvals[0];
+				
+				GetHist(matdiff,this->NUMOFBINS,this->motionBins);
+
+				this->bottombins = motionBins[0];
 				////////////////////////////////////////////
 				//For machine learning capture mode
 					this->OnFrameReady(bottombins);
@@ -566,7 +569,7 @@ namespace PhoneXamlDirect3DApp1Comp
 						
 				////////////////////////////////////////////
 
-				pixelThreshold=255/bins;
+				pixelThreshold=255/this->NUMOFBINS;
 				threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
 				m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
 
