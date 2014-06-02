@@ -211,9 +211,8 @@ namespace PhoneXamlDirect3DApp1
         #endregion
 
         #region Video Processing Frame Ready Events
-        void m_d3dInterop_OnFrameReady(float[] bin)
+        void m_d3dInterop_OnFrameReady(float lowbin)
         {
-            float lowbin = bin[0];
             //Learned thresh eval
             if (model != null)
             {
@@ -266,10 +265,6 @@ namespace PhoneXamlDirect3DApp1
                 rotatedStream.Seek(0, SeekOrigin.Begin);
 
                 string name = "motion "+ DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff");
-
-                /*maybe can detect using SensorRotationInDegrees property in AudioVideoCaptureDevice class: Gets the number of degrees that the camera sensor is rotated relative to the screen
-                  http://msdn.microsoft.com/en-us/library/windows/desktop/windows.phone.media.capture.audiovideocapturedevice
-                 */
 
                 //library.SavePictureToCameraRoll(name, rotatedStream); //This saves a vertical orientation picture to photo reel
                 uploadFile(name, rotatedStream);   //This saves a vertical orientation picture to oneDrive
@@ -375,10 +370,7 @@ namespace PhoneXamlDirect3DApp1
                 value = DeviceStatus.ApplicationPeakMemoryUsage / (1024.0f * 1024.0f);
                 PeakMemoryTextBlock.Text = value.ToString();
 
-                float[] bins = m_d3dInterop.MotionBins();
-                string motionoutput = bins[0].ToString() + ", " + bins[1].ToString() + ", " + bins[2].ToString() + "\n" + bins[3].ToString() + ", " + bins[4].ToString() ;
-                MotionOutput.Text = motionoutput;
-                //MotionOutput.Text = m_d3dInterop.LowMotionBins().ToString();
+                MotionOutput.Text = m_d3dInterop.LowMotionBins().ToString();
                 LearnedOutput.Text = m_d3dInterop.MotionStatus().ToString();
 
             }
@@ -925,7 +917,7 @@ namespace PhoneXamlDirect3DApp1
         // This gets called when the button gets pressed while it says "Go"
         private void startRecording()
         {
-            //m_d3dInterop.pauseVideo();
+            m_d3dInterop.pauseVideo();
 
             // Get audio data in 1/2 second chunks
             microphone.BufferDuration = TimeSpan.FromMilliseconds(500);
