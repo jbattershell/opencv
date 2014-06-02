@@ -67,6 +67,7 @@ public:
 	void ResetCapture();
 	bool MotionStatus();
 	float LowMotionBins();
+	Platform::Array<float>^ MotionBins();
 	int GetNumberOfBins();
 	void SetPixelThreshold(int thresh);
 	void SetImageThreshold(int thresh);
@@ -93,6 +94,9 @@ private:
     void StartCamera();
     void ProcessFrame();
     bool SwapFrames();
+	
+	static const int NUMOFBINS = 5;
+	float motionBins[NUMOFBINS];
 
 	QuadRenderer^ m_renderer;
 	Windows::Foundation::Size m_renderResolution;

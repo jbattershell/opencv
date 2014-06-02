@@ -196,7 +196,12 @@ namespace PhoneXamlDirect3DApp1Comp
 	float Direct3DInterop::LowMotionBins()
 	{return this->bottombins;}
 
-	
+	Platform::Array<float>^ Direct3DInterop::MotionBins()
+	{
+		auto binoutput = ref new Platform::Array<float>(this->motionBins, NUMOFBINS);
+		return binoutput;
+	}
+
 	void Direct3DInterop::SetPixelThreshold(int thresh)
 	{this->pixelThreshold=thresh;}
 	void Direct3DInterop::SetImageThreshold(int thresh)

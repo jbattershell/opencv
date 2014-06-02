@@ -49,6 +49,7 @@ namespace PhoneXamlDirect3DApp1
         private DispatcherTimer m_timer;
         MediaLibrary library = new MediaLibrary();
         private bool motionCaptureEnabled;
+        private string uploadPrefix = "Jon_";
         
         private int trainingMode;   //0=not training, 1=positive training, 2=negative training
             const int NOTTRAINING = 0;
@@ -264,7 +265,11 @@ namespace PhoneXamlDirect3DApp1
                 rotatedStream = RotateStream(fileStream, 90);
                 rotatedStream.Seek(0, SeekOrigin.Begin);
 
-                string name = "motion "+ DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff");
+                string name = uploadPrefix+"motion "+ DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff");
+
+                /*maybe can detect using SensorRotationInDegrees property in AudioVideoCaptureDevice class: Gets the number of degrees that the camera sensor is rotated relative to the screen
+                  http://msdn.microsoft.com/en-us/library/windows/desktop/windows.phone.media.capture.audiovideocapturedevice
+                 */
 
                 //library.SavePictureToCameraRoll(name, rotatedStream); //This saves a vertical orientation picture to photo reel
                 uploadFile(name, rotatedStream);   //This saves a vertical orientation picture to oneDrive
@@ -651,7 +656,7 @@ namespace PhoneXamlDirect3DApp1
             IsolatedStorageFile isf = IsolatedStorageFile.GetUserStoreForApplication();
 
             // we give our file a filename
-            strSaveName = "audio_" + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss") + ".wav";
+            strSaveName = uploadPrefix+"audio_" + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss") + ".wav";
 
             // if that file exists... 
             if (isf.FileExists(strSaveName))
@@ -917,7 +922,7 @@ namespace PhoneXamlDirect3DApp1
         // This gets called when the button gets pressed while it says "Go"
         private void startRecording()
         {
-            m_d3dInterop.pauseVideo();
+            //m_d3dInterop.pauseVideo();
 
             // Get audio data in 1/2 second chunks
             microphone.BufferDuration = TimeSpan.FromMilliseconds(500);
@@ -1067,7 +1072,7 @@ namespace PhoneXamlDirect3DApp1
                             googleText = alternative.transcript;
                             IsolatedStorageFile store = IsolatedStorageFile.GetUserStoreForApplication();
                             // we give our file a filename
-                            string strSaveNameTemp = "transcript_" + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss") + ".txt";
+                            string strSaveNameTemp = uploadPrefix + "transcript_" + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss") + ".txt";
 
                             // Declare a new StreamWriter.
                             StreamWriter writer = null;
