@@ -172,7 +172,7 @@ namespace PhoneXamlDirect3DApp1Comp
 		}
     }
 	int Direct3DInterop::GetNumberOfBins()
-	{return 15;}	//not sure how to get a const int in my class.  Hardcoding in the meantime...
+	{return NUMOFBINS;}
 	
     void Direct3DInterop::SetCapture()
     {this->m_captureFrame=true;}
@@ -195,6 +195,13 @@ namespace PhoneXamlDirect3DApp1Comp
 	{return this->motionDetected;}
 	float Direct3DInterop::LowMotionBins()
 	{return this->bottombins;}
+
+	
+	Platform::Array<float>^ Direct3DInterop::MotionBins()
+	{
+		auto binoutput = ref new Platform::Array<float>(this->motionBins, NUMOFBINS);
+		return binoutput;
+	}
 
 	
 	void Direct3DInterop::SetPixelThreshold(int thresh)
@@ -543,14 +550,20 @@ namespace PhoneXamlDirect3DApp1Comp
 				ShiftBackground(mat,matback,0.5f);	//Move the background image a little closer to the current image
 						
 				ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
-				const int bins = 15;
-				float binvals[bins];
-				GetHist(matdiff,bins,binvals);
+				//const int bins = 15;
+				//float binvals[NUMOFBINS];
+				//GetHist(matdiff,bins,binvals);
 
-				this->bottombins = binvals[0];
+				
+				GetHist(matdiff,this->NUMOFBINS,this->motionBins);
+
+				//this->bottombins = binvals[0];
 				////////////////////////////////////////////
 				//For machine learning capture mode
-					this->OnFrameReady(bottombins);
+					//this->OnFrameReady(bottombins);
+				
+					auto binoutput = ref new Platform::Array<float>(this->motionBins, NUMOFBINS);
+					this->OnFrameReady(binoutput);
 						
 					//Send picture to C# code to save
 					if (m_captureFrame)
@@ -561,8 +574,9 @@ namespace PhoneXamlDirect3DApp1Comp
 						
 				////////////////////////////////////////////
 
-				pixelThreshold=255/bins;
-				threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
+				pixelThreshold=255/15;
+				cv::threshold(*matdiff,*matOlder,pixelThreshold,255,THRESH_BINARY);
+				//if (this->m_renderer != NULL)
 				m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
 
 

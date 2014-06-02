@@ -35,7 +35,7 @@ class CameraCaptureSampleSink;
 public delegate void RequestAdditionalFrameHandler();
 public delegate void RecreateSynchronizedTextureHandler();
 public delegate void CaptureFrameReadyEvent(const Platform::Array<int>^ data, int cols, int rows);
-public delegate void FrameReadyEvent(float lowbin);
+public delegate void FrameReadyEvent(const Platform::Array<float>^ currentMotionBins);
 
 [Windows::Foundation::Metadata::WebHostHidden]
 public ref class Direct3DInterop sealed : public Windows::Phone::Input::Interop::IDrawingSurfaceManipulationHandler
@@ -67,6 +67,7 @@ public:
 	void ResetCapture();
 	bool MotionStatus();
 	float LowMotionBins();
+	Platform::Array<float>^ MotionBins();
 	int GetNumberOfBins();
 	void SetPixelThreshold(int thresh);
 	void SetImageThreshold(int thresh);
@@ -93,6 +94,9 @@ private:
     void StartCamera();
     void ProcessFrame();
     bool SwapFrames();
+
+	static const int NUMOFBINS = 5;
+	float motionBins[NUMOFBINS];
 
 	QuadRenderer^ m_renderer;
 	Windows::Foundation::Size m_renderResolution;
