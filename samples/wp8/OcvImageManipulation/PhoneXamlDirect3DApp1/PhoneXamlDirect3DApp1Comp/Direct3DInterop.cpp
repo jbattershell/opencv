@@ -571,7 +571,46 @@ namespace PhoneXamlDirect3DApp1Comp
 
 				pixelThreshold=255/this->NUMOFBINS;
 				threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
-				m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
+
+
+				
+				////////////////////////////////////////////////////
+				// set up the parameters (check the defaults in opencv's code in blobdetector.cpp)
+				//cv::SimpleBlobDetector::Params params;
+				//params.minDistBetweenBlobs = 50.0f;
+				//params.filterByInertia = false;
+				//params.filterByConvexity = false;
+				//params.filterByColor = false;
+				//params.filterByCircularity = false;
+				//params.filterByArea = true;
+				//params.minArea = 20.0f;
+				//params.maxArea = 500.0f;
+				//// ... any other params you don't want default value
+
+				//// set up and create the detector using the parameters
+				////cv::Ptr<cv::FeatureDetector> blob_detector = new cv::SimpleBlobDetector(params);
+				////blob_detector->create("SimpleBlob");
+				//SimpleBlobDetector blob_detector( params );
+				//blob_detector.create("SimpleBlob");
+
+				//
+				//std::vector< std::vector <cv::Point>> contours;
+
+				//// detect!
+				//std::vector<cv::KeyPoint> keypoints;
+				//blob_detector.detect(*matdiff, keypoints);
+
+				//// extract the x y coordinates of the keypoints: 
+
+				//for (int i=0; i<keypoints.size(); i++){
+				//	float X=keypoints[i].pt.x; 
+				//	float Y=keypoints[i].pt.y;
+				//}
+				////////////////////////////////////////////////////
+
+				if (m_renderer)
+					m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
+
 
 
 				this->frameProcessingInProgress = false;
