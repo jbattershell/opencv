@@ -252,9 +252,6 @@ namespace PhoneXamlDirect3DApp1
                     recogBuff[i].value = featureData[i];
                 }
 
-                // Let's try our hand at some recognition!
-                DateTime startTime = DateTime.Now;
-
                 string resultStr = "";
                 double val = evaluate(recogBuff, model, ref resultStr);
 
@@ -273,7 +270,10 @@ namespace PhoneXamlDirect3DApp1
         {
             m_d3dInterop.ResetCapture();
 
-            //if (m_d3dInterop.MotionBins()[m_d3dInterop.NumOfBins() * 4 / 15] > 0)   //only send in if there is significant motion
+            float[] bins = m_d3dInterop.MotionBins();
+            int midBinNum = m_d3dInterop.GetNumberOfBins() * 4 / 15;
+
+            if (bins[midBinNum] > 20)   //only send in if there is significant motion
             {
                 Dispatcher.BeginInvoke(() =>
                 {
@@ -288,7 +288,7 @@ namespace PhoneXamlDirect3DApp1
                     rotatedStream = RotateStream(fileStream, 90);
                     rotatedStream.Seek(0, SeekOrigin.Begin);
 
-                    float[] bins = m_d3dInterop.MotionBins();
+                    //float[] bins = m_d3dInterop.MotionBins();
                     string motionoutput = bins[0].ToString() + "," + bins[1].ToString() + "," + bins[2].ToString() + "," + bins[3].ToString() + "," + bins[4].ToString();
 
 

@@ -173,7 +173,7 @@ namespace PhoneXamlDirect3DApp1Comp
 		}
     }
 	int Direct3DInterop::GetNumberOfBins()
-	{return 15;}	//not sure how to get a const int in my class.  Hardcoding in the meantime...
+	{return this->NUMOFBINS;}	//not sure how to get a const int in my class.  Hardcoding in the meantime...
 	
     void Direct3DInterop::SetCapture()
     {this->m_captureFrame=true;}
@@ -569,12 +569,12 @@ namespace PhoneXamlDirect3DApp1Comp
 					//Send picture to C# code to save
 					if (m_captureFrame)
 					{
-						//auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
-						//this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+						auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+						this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
 
 						
-						auto buff = ref new Platform::Array<int>( (int*) matdiff->data, matdiff->cols * matdiff->rows);
-						this->OnCaptureFrameReady( buff, matdiff->cols, matdiff->rows );
+						//auto buff = ref new Platform::Array<int>( (int*) matdiff->data, matdiff->cols * matdiff->rows);
+						//this->OnCaptureFrameReady( buff, matdiff->cols, matdiff->rows );
 					}
 						
 				////////////////////////////////////////////
