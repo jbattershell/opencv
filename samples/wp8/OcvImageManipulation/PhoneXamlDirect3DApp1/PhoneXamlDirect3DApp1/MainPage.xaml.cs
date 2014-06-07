@@ -142,6 +142,10 @@ namespace PhoneXamlDirect3DApp1
         private bool loggedIn = false;
         private bool uploadComplete = true;
 
+        string audioID;
+        string pictureID;
+        string transcriptID;
+
         string googleText;
 
         int quietCount = 0;
@@ -683,14 +687,23 @@ namespace PhoneXamlDirect3DApp1
             try
             {
                 //LiveOperationResult uploadOperation = await client.BackgroundUploadAsync("me/skydrive", new Uri("/shared/transfers/" + strSaveName, UriKind.Relative), OverwriteOption.Overwrite);
-                LiveOperationResult uploadOperation = await this.client.UploadAsync("me/skydrive", strSaveName, fileStream, OverwriteOption.Overwrite);
-                //LiveOperationResult uploadResult = await uploadOperation.StartAsync();
-                textOutput.Text = "File " + strSaveName + " uploaded";
+                char[] temp = strSaveName.ToCharArray();
+                if (temp[temp.Length - 1] == 't')
+                {
+                    LiveOperationResult uploadOperation = await this.client.UploadAsync(transcriptID, strSaveName, fileStream, OverwriteOption.Overwrite);
+                    textOutput.Text = "File " + strSaveName + " uploaded";
+                }
+                else
+                {
+                    LiveOperationResult uploadOperation = await this.client.UploadAsync(pictureID, strSaveName, fileStream, OverwriteOption.Overwrite);
+                    textOutput.Text = "File " + strSaveName + " uploaded";
+                }
+
             }
 
             catch (Exception ex)
             {
-                textOutput.Text = "Error uploading photo: " + ex.Message;
+                textOutput.Text = "Error uploading: " + ex.Message;
             }
 
         }
@@ -843,6 +856,7 @@ namespace PhoneXamlDirect3DApp1
             else
             {
                 this.client = null;
+                loggedIn = false;
                 textOutput.Text = e.Error != null ? e.Error.ToString() : string.Empty;
             }
 
@@ -858,6 +872,7 @@ namespace PhoneXamlDirect3DApp1
                 string lastName = jsonResult.last_name ?? string.Empty;
                 textOutTranscript.Text = "Welcome " + firstName + " " + lastName;
                 loggedIn = true;
+                CreateFolder();
             }
             catch (Exception e)
             {
@@ -877,7 +892,7 @@ namespace PhoneXamlDirect3DApp1
                         uploadComplete = false;
 
                         //LiveOperationResult uploadOperation = await client.BackgroundUploadAsync("me/skydrive", new Uri("/shared/transfers/" + strSaveName, UriKind.Relative), OverwriteOption.Overwrite);
-                        LiveOperationResult uploadOperation = await this.client.UploadAsync("me/skydrive", strSaveName, fileStream, OverwriteOption.Overwrite);
+                        LiveOperationResult uploadOperation = await this.client.UploadAsync(audioID, strSaveName, fileStream, OverwriteOption.Overwrite);
                         //LiveOperationResult uploadResult = await uploadOperation.StartAsync();
                         if (uploadOperation.Result != null)
                         {
@@ -903,6 +918,125 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
+        private async void CreateFolder()
+        {
+
+            try
+            {
+
+                //LiveOperationResult operationResult = await this.client.PostAsync("me/skydrive", folderData);
+
+                LiveOperationResult operationResult = await this.client.GetAsync("me/skydrive/files?filter=folders");
+
+                dynamic result = operationResult.Result;
+
+                List<object> folder = result.data;
+
+                bool AudioNameExists = false;
+
+                bool PictureNameExists = false;
+
+                bool TranscriptNameExists = false;
+
+                foreach (dynamic item in folder)
+                {
+
+                    if (item.name == "CreeperAudio")
+                    {
+
+                        audioID = item.id as string;
+
+                        AudioNameExists = true;
+
+                    }
+
+                    if (item.name == "CreeperPicture")
+                    {
+
+                        pictureID = item.id as string;
+
+                        PictureNameExists = true;
+
+                    }
+
+                    if (item.name == "CreeperTranscript")
+                    {
+
+                        transcriptID = item.id as string;
+
+                        TranscriptNameExists = true;
+
+                    }
+
+                }
+
+                if (AudioNameExists == false)
+                {
+
+                    //create the folder
+
+                    var folderData = new Dictionary<string, object>();
+
+                    folderData.Add("name", "CreeperAudio");
+
+                    operationResult = await this.client.PostAsync("me/skydrive", folderData);
+
+                    dynamic result2 = operationResult.Result;
+
+                    audioID = result2.id as string;
+
+                    this.textOutput.Text = string.Join(" ", "Created folder:", result2.name, "ID:", result2.id);
+
+                }
+
+                if (PictureNameExists == false)
+                {
+
+                    //create the folder
+
+                    var folderData = new Dictionary<string, object>();
+
+                    folderData.Add("name", "CreeperPicture");
+
+                    operationResult = await this.client.PostAsync("me/skydrive", folderData);
+
+                    dynamic result3 = operationResult.Result;
+
+                    pictureID = result3.id as string;
+
+                    this.textOutput.Text = string.Join(" ", "Created folder:", result3.name, "ID:", result3.id);
+
+                }
+
+                if (TranscriptNameExists == false)
+                {
+
+                    //create the folder
+
+                    var folderData = new Dictionary<string, object>();
+
+                    folderData.Add("name", "CreeperTranscript");
+
+                    operationResult = await this.client.PostAsync("me/skydrive", folderData);
+
+                    dynamic result4 = operationResult.Result;
+
+                    transcriptID = result4.id as string;
+
+                    this.textOutput.Text = string.Join(" ", "Created folder:", result4.name, "ID:", result4.id);
+
+                }
+
+            }
+
+            catch (LiveConnectException exception)
+            {
+
+                this.textOutput.Text = "Error creating folder: " + exception.Message;
+
+            }
+
+        }
         ///////this is the google code part
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
