@@ -35,7 +35,8 @@ class CameraCaptureSampleSink;
 public delegate void RequestAdditionalFrameHandler();
 public delegate void RecreateSynchronizedTextureHandler();
 public delegate void CaptureFrameReadyEvent(const Platform::Array<int>^ data, int cols, int rows);
-public delegate void FrameReadyEvent(float lowbin);
+//public delegate void FrameReadyEvent(float lowbin);
+public delegate void FrameReadyEvent(const Platform::Array<float>^ bins);
 
 [Windows::Foundation::Metadata::WebHostHidden]
 public ref class Direct3DInterop sealed : public Windows::Phone::Input::Interop::IDrawingSurfaceManipulationHandler

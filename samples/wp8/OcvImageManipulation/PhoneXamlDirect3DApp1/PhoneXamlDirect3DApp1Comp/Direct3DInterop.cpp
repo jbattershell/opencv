@@ -559,7 +559,8 @@ namespace PhoneXamlDirect3DApp1Comp
 				this->bottombins = motionBins[0];
 				////////////////////////////////////////////
 				//For machine learning capture mode
-					this->OnFrameReady(motionBins[1]);
+					//this->OnFrameReady(motionBins[1]); 
+					this->OnFrameReady(MotionBins());
 						
 					//Send picture to C# code to save
 					if (m_captureFrame)

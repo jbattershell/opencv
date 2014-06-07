@@ -64,8 +64,11 @@ namespace PhoneXamlDirect3DApp1
         svm_node[] recogBuff = null;
 
         // These are the list of recording objects
-        ObservableCollection<float> posRecordings = new ObservableCollection<float>();
-        ObservableCollection<float> negRecordings = new ObservableCollection<float>();
+        //ObservableCollection<float> posRecordings = new ObservableCollection<float>();
+        //ObservableCollection<float> negRecordings = new ObservableCollection<float>();
+
+        ObservableCollection<float[]> posRecordings = new ObservableCollection<float[]>();
+        ObservableCollection<float[]> negRecordings = new ObservableCollection<float[]>();
 
         #endregion
 
@@ -212,13 +215,13 @@ namespace PhoneXamlDirect3DApp1
         #endregion
 
         #region Video Processing Frame Ready Events
-        void m_d3dInterop_OnFrameReady(float lowbin)
+        void m_d3dInterop_OnFrameReady(float[] bins)
         {
             //Learned thresh eval
             if (model != null)
             {
                 // Copy in the latest data to recogBuff
-                double[] featureData = computeFeatureVector(lowbin);
+                double[] featureData = computeFeatureVector(bins);
                 if (recogBuff == null)
                 {
                     recogBuff = new svm_node[featureData.Length];
@@ -357,12 +360,12 @@ namespace PhoneXamlDirect3DApp1
             }
             else if (m_d3dInterop != null && posRecordings != null && negRecordings != null && trainingMode == POSITIVETRAINING && posRecordings.Count < SAMPLESTOTRAIN)
             {
-                posRecordings.Add(m_d3dInterop.LowMotionBins());
+                posRecordings.Add(m_d3dInterop.MotionBins());
             }
             else if (m_d3dInterop != null && posRecordings != null && negRecordings != null && trainingMode == NEGATIVETRAINING && negRecordings.Count < SAMPLESTOTRAIN)
             {
                 //Only records a certain number of frames
-                negRecordings.Add(m_d3dInterop.LowMotionBins());
+                negRecordings.Add(m_d3dInterop.MotionBins());
             }
 
             ///////////////////////////
@@ -481,6 +484,16 @@ namespace PhoneXamlDirect3DApp1
             //floating point data is number of bins over threshold
             //Also add in bin numbers
             double[] featureVec = { data, m_d3dInterop.GetNumberOfBins() };
+
+            return featureVec;
+        }
+
+        // This computes a feature vector out of some floating point data
+        double[] computeFeatureVector(float[] data)
+        {
+            //floating point data is number of bins over threshold
+            //Also add in bin numbers
+            double[] featureVec = { data[0], data[1], data[2], data[3], data[4] };
 
             return featureVec;
         }
