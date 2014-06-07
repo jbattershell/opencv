@@ -73,6 +73,7 @@ namespace PhoneXamlDirect3DApp1Comp
 		this->pixelThreshold = 40;
 		this->threadHandle = nullptr;
 		this->frameProcessingInProgress = false;
+		this->frameRenderingInProgress = false;
 		this->startProc();	//start processing frame so it is available
 
 		//bins = 15;
@@ -81,10 +82,10 @@ namespace PhoneXamlDirect3DApp1Comp
     bool Direct3DInterop::SwapFrames()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(m_backFrame != nullptr && !this->frameProcessingInProgress)	//If not still processing frame
+        if(m_backFrame != nullptr && !this->frameProcessingInProgress && !this->frameRenderingInProgress)	//If not still processing frame
         {
 			
-            std::swap(m_frontMinus2Frame, m_frontMinus1Frame);	//oldest data goes to m_frontMinus2Frame
+            //std::swap(m_frontMinus2Frame, m_frontMinus1Frame);	//oldest data goes to m_frontMinus2Frame
             std::swap(m_frontMinus1Frame, m_frontFrame);		//next oldest goes to m_frontMinus1Frame
             std::swap(m_backFrame, m_frontFrame);				//newest data goes to frontFrame
             return true;
@@ -120,9 +121,9 @@ namespace PhoneXamlDirect3DApp1Comp
 			if (m_renderer)
 			{
 				cv::Mat* mat = m_frontFrame.get();	//load in newest data
-				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
-				cv::Mat* matOlder = m_frontMinus2Frame.get();	//load in 2 frame old data
-				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
+				//cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
+				//cv::Mat* matForRender = m_frontMinus2Frame.get();	//load in 2 frame old data
+				//cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
 				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
 
 						//if (
@@ -135,7 +136,7 @@ namespace PhoneXamlDirect3DApp1Comp
 						}
 						//ApplyBlurFilter(mat);
 						//diffImg(matOlder, matOld, mat, matdiff);	//looks for motion in the last three frames
-						this->ProcessThisFrame(matback,mat,matdiff);
+						this->ProcessThisFrame(matback,mat,mat);
 
 
 						//Move into Processing Thread
@@ -535,7 +536,7 @@ namespace PhoneXamlDirect3DApp1Comp
 		// Keep looping as long as the threadHandle doesn't think we've been canceled
 		while( (this->threadHandle->Status != Windows::Foundation::AsyncStatus::Canceled) ) //not canceled, have something to process
 		{
-			if (this->frameProcessingInProgress == true)
+			if ((this->frameProcessingInProgress == true) && (frameRenderingInProgress==false))
 			{
 				cv::Mat* mat = m_frontFrame.get();	//load in newest data
 				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
@@ -558,7 +559,7 @@ namespace PhoneXamlDirect3DApp1Comp
 				this->bottombins = motionBins[0];
 				////////////////////////////////////////////
 				//For machine learning capture mode
-					this->OnFrameReady(bottombins);
+					this->OnFrameReady(motionBins[1]);
 						
 					//Send picture to C# code to save
 					if (m_captureFrame)
@@ -608,12 +609,15 @@ namespace PhoneXamlDirect3DApp1Comp
 				//}
 				////////////////////////////////////////////////////
 
-				if (m_renderer)
-					m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
+				
+				cv::Mat* matForRender = m_frontMinus2Frame.get();	//load in 2 frame old data
+				memcpy(matForRender->data, matdiff->data, 4*matdiff->cols * matdiff->rows);
 
+					//m_renderer->CreateTextureFromByte(matForRender->data, matForRender->cols, matForRender->rows,&this->frameRenderingInProgress);
 
 
 				this->frameProcessingInProgress = false;
+
 			}
 		}
 

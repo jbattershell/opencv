@@ -29,7 +29,7 @@ public:
 	QuadRenderer();
 
 	void Update(float timeTotal = 0.0f, float timeDelta = 0.0f);
-    void CreateTextureFromByte(byte  *  buffer,int width,int height);
+    void CreateTextureFromByte(byte  *  buffer,int width,int height, bool* frameRenderingInProgress);
 
 	// Direct3DBase methods.
 	virtual void CreateDeviceResources() override;

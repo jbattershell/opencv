@@ -12,8 +12,9 @@ QuadRenderer::QuadRenderer() :
 {
 }
 
-void QuadRenderer::CreateTextureFromByte(byte* buffer,int width,int height)
+void QuadRenderer::CreateTextureFromByte(byte* buffer,int width,int height, bool* frameRenderingInProgress)
 {
+	*frameRenderingInProgress = true;
 	int pixelSize = 4;
 
 	if (m_Texture.Get() == nullptr)
@@ -71,6 +72,8 @@ void QuadRenderer::CreateTextureFromByte(byte* buffer,int width,int height)
 			
 		m_d3dContext->Unmap(m_Texture.Get(), 0);
 	}
+	
+	*frameRenderingInProgress = false;
 }
 
 void QuadRenderer::CreateDeviceResources()

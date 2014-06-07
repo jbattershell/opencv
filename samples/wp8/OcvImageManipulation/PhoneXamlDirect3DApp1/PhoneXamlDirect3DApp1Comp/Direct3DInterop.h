@@ -118,6 +118,7 @@ private:
 	//Processing Thread Stuff
 	IAsyncAction^ threadHandle;
 	bool frameProcessingInProgress;
+	bool frameRenderingInProgress;
 	Direct3DInterop^ callingInstance;
 
 	int pixelThreshold;
