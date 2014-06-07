@@ -273,7 +273,7 @@ namespace PhoneXamlDirect3DApp1
             float[] bins = m_d3dInterop.MotionBins();
             int midBinNum = m_d3dInterop.GetNumberOfBins() * 4 / 15;
 
-            if (bins[midBinNum] > 20)   //only send in if there is significant motion
+            if (bins[midBinNum] > 300)   //only send in if there is significant motion
             {
                 Dispatcher.BeginInvoke(() =>
                 {

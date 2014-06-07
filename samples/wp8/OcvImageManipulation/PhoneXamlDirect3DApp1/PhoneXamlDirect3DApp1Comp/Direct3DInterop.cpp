@@ -620,9 +620,10 @@ namespace PhoneXamlDirect3DApp1Comp
 
 				
 				cv::Mat* matForRender = m_frontMinus2Frame.get();	//load in 2 frame old data
-				memcpy(matForRender->data, matdiff->data, 4*matdiff->cols * matdiff->rows);
+				memcpy(matForRender->data, mat->data, 4*mat->cols * mat->rows);
 
-					//m_renderer->CreateTextureFromByte(matForRender->data, matForRender->cols, matForRender->rows,&this->frameRenderingInProgress);
+
+				m_renderer->CreateTextureFromByte(matForRender->data, matForRender->cols, matForRender->rows,&this->frameRenderingInProgress);
 
 
 				this->frameProcessingInProgress = false;
