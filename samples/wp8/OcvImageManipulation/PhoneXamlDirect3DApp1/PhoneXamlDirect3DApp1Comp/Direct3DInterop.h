@@ -68,6 +68,7 @@ public:
 	void ResetCapture();
 	bool MotionStatus();
 	float LowMotionBins();
+	//int GetNumOfBins();
 	Platform::Array<float>^ MotionBins();
 	int GetNumberOfBins();
 	void SetPixelThreshold(int thresh);

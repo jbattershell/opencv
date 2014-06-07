@@ -40,6 +40,7 @@ using Windows.Storage.Streams;
 
 using Newtonsoft.Json;
 
+
 namespace PhoneXamlDirect3DApp1
 {
     public partial class MainPage : PhoneApplicationPage
@@ -57,6 +58,14 @@ namespace PhoneXamlDirect3DApp1
             const int NEGATIVETRAINING = 2;
             const int SAMPLESTOTRAIN = 10;
 
+        private int pendingTrainingMode;
+        private int pendingCount;
+            const int PENDINGCOUNTTRIGGER = 20;
+        
+        private bool pendingCaptureMode;
+
+
+            private int TIMERPERIOD = 250;
 
         // This is the SVM model we will eventually train up
         svm_model model = null;
@@ -149,12 +158,17 @@ namespace PhoneXamlDirect3DApp1
             #region Video Init
 
             m_timer = new DispatcherTimer();
-            m_timer.Interval = new TimeSpan(0, 0, 0, 0, 250);   //trigger timer up to 4x per second
+            m_timer.Interval = new TimeSpan(0, 0, 0, 0, TIMERPERIOD);   //trigger timer up to 4x per second
             m_timer.Tick += new EventHandler(timer_Tick);
             m_timer.Start();
 
             motionCaptureEnabled = false;
             trainingMode = NOTTRAINING;
+
+            pendingTrainingMode = NOTTRAINING;
+            pendingCount=0;
+            
+            pendingCaptureMode = false;
             
             #endregion
 
@@ -245,7 +259,10 @@ namespace PhoneXamlDirect3DApp1
                 double val = evaluate(recogBuff, model, ref resultStr);
 
                 if (val == 1.0)
+                {
                     m_d3dInterop.SetMotionDetected(true);
+                    Debug.WriteLine(bins[0] + " " + bins[1] + " " + bins[2] + " " + bins[3] + " " + bins[4]);
+                }
                 else
                     m_d3dInterop.SetMotionDetected(false);
 
@@ -255,32 +272,39 @@ namespace PhoneXamlDirect3DApp1
         void m_d3dInterop_OnCaptureFrameReady(int[] data, int cols, int rows)
         {
             m_d3dInterop.ResetCapture();
-            Dispatcher.BeginInvoke(() =>
+
+            //if (m_d3dInterop.MotionBins()[m_d3dInterop.NumOfBins() * 4 / 15] > 0)   //only send in if there is significant motion
             {
-                WriteableBitmap wb = new WriteableBitmap(cols, rows);
-                Array.Copy(data, wb.Pixels, data.Length);
+                Dispatcher.BeginInvoke(() =>
+                {
+                    WriteableBitmap wb = new WriteableBitmap(cols, rows);
+                    Array.Copy(data, wb.Pixels, data.Length);
 
-                var fileStream = new MemoryStream();
-                wb.SaveJpeg(fileStream, wb.PixelWidth, wb.PixelHeight, 100, 100);
-                fileStream.Seek(0, SeekOrigin.Begin);
+                    var fileStream = new MemoryStream();
+                    wb.SaveJpeg(fileStream, wb.PixelWidth, wb.PixelHeight, 100, 100);
+                    fileStream.Seek(0, SeekOrigin.Begin);
 
-                var rotatedStream = new MemoryStream();
-                rotatedStream = RotateStream(fileStream, 90);
-                rotatedStream.Seek(0, SeekOrigin.Begin);
+                    var rotatedStream = new MemoryStream();
+                    rotatedStream = RotateStream(fileStream, 90);
+                    rotatedStream.Seek(0, SeekOrigin.Begin);
 
-                string name = uploadPrefix+"motion "+ DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff");
+                    float[] bins = m_d3dInterop.MotionBins();
+                    string motionoutput = bins[0].ToString() + "," + bins[1].ToString() + "," + bins[2].ToString() + "," + bins[3].ToString() + "," + bins[4].ToString();
 
-                /*maybe can detect using SensorRotationInDegrees property in AudioVideoCaptureDevice class: Gets the number of degrees that the camera sensor is rotated relative to the screen
-                  http://msdn.microsoft.com/en-us/library/windows/desktop/windows.phone.media.capture.audiovideocapturedevice
-                 */
 
-                //library.SavePictureToCameraRoll(name, rotatedStream); //This saves a vertical orientation picture to photo reel
-                uploadFile(name, rotatedStream);   //This saves a vertical orientation picture to oneDrive
+                    string name = uploadPrefix + "motion " + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff") + "_" + motionoutput;
 
-                //library.SavePictureToCameraRoll(name, fileStream); //This saves a horizontal orientation picture to photo reel
-                //uploadFile(name, fileStream);   //This saves a horizontal orientation picture to oneDrive
-            });
+                    /*maybe can detect using SensorRotationInDegrees property in AudioVideoCaptureDevice class: Gets the number of degrees that the camera sensor is rotated relative to the screen
+                      http://msdn.microsoft.com/en-us/library/windows/desktop/windows.phone.media.capture.audiovideocapturedevice
+                     */
 
+                    //library.SavePictureToCameraRoll(name, rotatedStream); //This saves a vertical orientation picture to photo reel
+                    uploadFile(name, rotatedStream);   //This saves a vertical orientation picture to oneDrive
+
+                    //library.SavePictureToCameraRoll(name, fileStream); //This saves a horizontal orientation picture to photo reel
+                    //uploadFile(name, fileStream);   //This saves a horizontal orientation picture to oneDrive
+                });
+            }
         }
         #endregion
 
@@ -298,13 +322,15 @@ namespace PhoneXamlDirect3DApp1
 
                 case "TrainingPos":
                     posRecordings.Clear();
-                    trainingMode = POSITIVETRAINING;
+                    pendingTrainingMode = POSITIVETRAINING;
+                    //trainingMode = POSITIVETRAINING;
 
                     break;
 
                 case "TrainingNeg":
                     negRecordings.Clear();
-                    trainingMode = NEGATIVETRAINING;
+                    pendingTrainingMode = NEGATIVETRAINING;
+                    //trainingMode = NEGATIVETRAINING;
 
                     break;
             }
@@ -317,7 +343,8 @@ namespace PhoneXamlDirect3DApp1
             {
                
                 case "Motion":
-                    motionCaptureEnabled = true;
+                    //motionCaptureEnabled = true;
+                    pendingCaptureMode = true;
                     break;
 
                 case "MotionOff":
@@ -334,28 +361,74 @@ namespace PhoneXamlDirect3DApp1
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            //
-            //////////////////////////////////
-            //Capture training data
 
+            if (pendingCaptureMode) //Button pressed, waiting to settle
+            {
+                if (pendingCount < PENDINGCOUNTTRIGGER)
+                {
+                    pendingCount++;
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        learnOutput.Text = ((int)((PENDINGCOUNTTRIGGER - pendingCount) * TIMERPERIOD / 1000)).ToString();
+                    });
+                }
+                else
+                {
+                    pendingCount = 0;
+                    motionCaptureEnabled = true;
+                    pendingCaptureMode = false;
+
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        learnOutput.Text = "Capture Started";
+                    });
+                }
+            }
+
+            if (pendingTrainingMode != NOTTRAINING) //Button pressed, waiting to settle
+            {
+                if (pendingCount < PENDINGCOUNTTRIGGER)
+                { 
+                    pendingCount++;
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        learnOutput.Text = ((int)((PENDINGCOUNTTRIGGER - pendingCount) * TIMERPERIOD/1000)).ToString();
+                    });
+                }
+                else
+                { 
+                    pendingCount = 0;
+                    trainingMode = pendingTrainingMode;
+                    pendingTrainingMode = NOTTRAINING;
+
+
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        learnOutput.Text = "Training Started";
+                    });
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////////////////
+
+            //Capture training data
+            //Capture a certain SAMPLESTOTRAIN samples
             if (negRecordings.Count >= SAMPLESTOTRAIN && trainingMode == NEGATIVETRAINING)
             {
                 //training done
+                trainingMode = NOTTRAINING;
                 Dispatcher.BeginInvoke(() =>
                 {
-                    trainingMode = NOTTRAINING;
                     learnOutput.Text = "Negative Samples Recorded";
-
                 });
             }
             else if (posRecordings.Count >= SAMPLESTOTRAIN && trainingMode == POSITIVETRAINING)
             {
                 //training done
+                trainingMode = NOTTRAINING;
                 Dispatcher.BeginInvoke(() =>
                 {
-                    trainingMode = NOTTRAINING;
                     learnOutput.Text = "Positive Samples Recorded";
-
                 });
             }
             else if (m_d3dInterop != null && posRecordings != null && negRecordings != null && trainingMode == POSITIVETRAINING && posRecordings.Count < SAMPLESTOTRAIN)

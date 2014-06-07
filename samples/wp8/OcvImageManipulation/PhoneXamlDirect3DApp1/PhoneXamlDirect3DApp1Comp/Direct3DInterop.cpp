@@ -197,6 +197,10 @@ namespace PhoneXamlDirect3DApp1Comp
 	float Direct3DInterop::LowMotionBins()
 	{return this->bottombins;}
 
+	
+	//int Direct3DInterop::GetNumOfBins()
+	//{return this->NUMOFBINS;}
+
 	Platform::Array<float>^ Direct3DInterop::MotionBins()
 	{
 		auto binoutput = ref new Platform::Array<float>(this->motionBins, NUMOFBINS);
@@ -546,7 +550,7 @@ namespace PhoneXamlDirect3DApp1Comp
 
 				diffImg(matback, mat, matdiff);	//looks for motion vs background frame
 
-				ShiftBackground(mat,matback,0.5f);	//Move the background image a little closer to the current image
+				ShiftBackground(mat,matback,0.70f);	//Move the background image a little closer to the current image
 						
 				ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
 				//const int bins = 15;
@@ -565,8 +569,12 @@ namespace PhoneXamlDirect3DApp1Comp
 					//Send picture to C# code to save
 					if (m_captureFrame)
 					{
-						auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
-						this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+						//auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+						//this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+
+						
+						auto buff = ref new Platform::Array<int>( (int*) matdiff->data, matdiff->cols * matdiff->rows);
+						this->OnCaptureFrameReady( buff, matdiff->cols, matdiff->rows );
 					}
 						
 				////////////////////////////////////////////
