@@ -30,7 +30,7 @@
                 </phone:PanoramaItem.RenderTransform>
 
                 <Grid>
-                    <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" Margin="0,490,0,0" />
+                    <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" Margin="0,496,270,0" />
                     <StackPanel Margin="0">
                         <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
                    Checked="RadioButton_Checked" Height="74"/>
