@@ -35,7 +35,6 @@ class CameraCaptureSampleSink;
 public delegate void RequestAdditionalFrameHandler();
 public delegate void RecreateSynchronizedTextureHandler();
 public delegate void CaptureFrameReadyEvent(const Platform::Array<int>^ data, int cols, int rows);
-//public delegate void FrameReadyEvent(float lowbin);
 public delegate void FrameReadyEvent(const Platform::Array<float>^ bins);
 
 [Windows::Foundation::Metadata::WebHostHidden]
@@ -68,7 +67,6 @@ public:
 	void ResetCapture();
 	bool MotionStatus();
 	float LowMotionBins();
-	//int GetNumOfBins();
 	Platform::Array<float>^ MotionBins();
 	int GetNumberOfBins();
 	void SetPixelThreshold(int thresh);
@@ -78,6 +76,9 @@ public:
 
 	void pauseVideo();
 	void resumeVideo();
+
+	void viewFinderTurnOff();
+	void viewFinderTurnOn();
 
 protected:
 	// Event Handlers
@@ -108,6 +109,7 @@ private:
 	bool m_captureFrame;
 	bool motionDetected;
 	bool pauseFrames;
+	bool viewFinderOn;
 	float bottombins;
     std::shared_ptr<cv::Mat> m_backFrame;
     std::shared_ptr<cv::Mat> m_frontFrame;
@@ -133,7 +135,7 @@ private:
 	CameraCapturePreviewSink* pCameraCapturePreviewSink;
 	CameraCaptureSampleSink* pCameraCaptureSampleSink;
 
-	//void ApplyPreviewFilter(const cv::Mat& image);
+
 	void diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* t2, cv::Mat* output);
 	void diffImg(cv::Mat* t0, cv::Mat* t1, cv::Mat* output);
 	void ResetTransparency(cv::Mat* mat);
@@ -155,7 +157,7 @@ private:
 	void thread( IAsyncAction^ operation );
 
 	//Pass in the call to trigger a new frame
-	void ProcessThisFrame(cv::Mat* matback, cv::Mat* mat, cv::Mat* matdiff);
+	void ProcessThisFrame();
 };
 
 class CameraCapturePreviewSink :
