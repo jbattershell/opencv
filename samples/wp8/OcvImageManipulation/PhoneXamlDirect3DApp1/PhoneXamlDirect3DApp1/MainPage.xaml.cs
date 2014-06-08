@@ -170,6 +170,7 @@ namespace PhoneXamlDirect3DApp1
             pendingCount=0;
             
             pendingCaptureMode = false;
+            PhoneApplicationService.Current.UserIdleDetectionMode = IdleDetectionMode.Disabled;
             
             #endregion
 
@@ -338,7 +339,17 @@ namespace PhoneXamlDirect3DApp1
             {
                
                 case "Motion":
-                    pendingCaptureMode = true; //Sets pending flag so capture is started after a delay
+                    if (model != null)
+                    {
+                        pendingCaptureMode = true; //Sets pending flag so capture is started after a delay
+                    }
+                    else
+                    {
+                        Dispatcher.BeginInvoke(() =>
+                        {
+                            learnOutput.Text = "Learn a model first!";
+                        });
+                    }
                     break;
 
                 case "MotionOff":
@@ -510,6 +521,7 @@ namespace PhoneXamlDirect3DApp1
         // Shamelessly stolen from example
         private void learnButton_Click(object sender, RoutedEventArgs e)
         {
+            m_d3dInterop.viewFinderTurnOff();
             learnOutput.Text = "Learning";
             
             // We're going to assemble all positive and negative feature vectors

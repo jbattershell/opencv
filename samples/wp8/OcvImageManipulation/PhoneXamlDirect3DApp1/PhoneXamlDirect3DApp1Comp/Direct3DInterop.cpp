@@ -68,7 +68,7 @@ namespace PhoneXamlDirect3DApp1Comp
         , m_frontMinus2Frame(nullptr)
         , m_diffFrame(nullptr)
 		, pauseFrames (false)
-		, viewFinderOn (false)
+		, viewFinderOn (true)
     {
 		this->imageThreshold = 300000;
 		this->pixelThreshold = 40;
@@ -506,8 +506,6 @@ namespace PhoneXamlDirect3DApp1Comp
 			if ((this->frameProcessingInProgress == true) && (frameRenderingInProgress==false))
 			{
 				cv::Mat* mat = m_frontFrame.get();	//load in newest data
-				cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
-				cv::Mat* matOlder = m_frontMinus2Frame.get();	//load in 2 frame old data
 				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
 				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
 

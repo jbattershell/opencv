@@ -30,7 +30,7 @@
                 </phone:PanoramaItem.RenderTransform>
 
                 <Grid>
-                    <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" Margin="0,496,270,0" />
+                    <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" Margin="205,412,10,10" />
                     <StackPanel Margin="0">
                         <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
                    Checked="RadioButton_Checked" Height="74"/>
@@ -48,9 +48,6 @@
                             <TextBlock Text="Peak Memory: "/>
                             <TextBlock x:Name="PeakMemoryTextBlock"/>
                             <TextBlock Text=" MB"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                            <TextBlock Text=""/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
                             <TextBlock Text="Low Motion Count: "/>
@@ -71,8 +68,9 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="71">
                             <Button x:Name="ModelLearn" Click="learnButton_Click" Width="126" Content="Learn" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="71">
                             <TextBlock x:Name="learnOutput" Text="No Learn Started "/>
-
                         </StackPanel>
                     </StackPanel>
                 </Grid>
