@@ -73,9 +73,6 @@ namespace PhoneXamlDirect3DApp1
         svm_node[] recogBuff = null;
 
         // These are the list of recording objects
-        //ObservableCollection<float> posRecordings = new ObservableCollection<float>();
-        //ObservableCollection<float> negRecordings = new ObservableCollection<float>();
-
         ObservableCollection<float[]> posRecordings = new ObservableCollection<float[]>();
         ObservableCollection<float[]> negRecordings = new ObservableCollection<float[]>();
 
@@ -238,7 +235,7 @@ namespace PhoneXamlDirect3DApp1
             //Learned thresh eval
             if (model != null)
             {
-                // Copy in the latest data to recogBuff
+                // Copy in the latest data to a buffer to feed into recognition function
                 double[] featureData = computeFeatureVector(bins);
                 if (recogBuff == null)
                 {
@@ -292,9 +289,7 @@ namespace PhoneXamlDirect3DApp1
                     rotatedStream = RotateStream(fileStream, 90);
                     rotatedStream.Seek(0, SeekOrigin.Begin);
 
-                    //float[] bins = m_d3dInterop.MotionBins();
                     string motionoutput = bins[0].ToString() + "," + bins[1].ToString() + "," + bins[2].ToString() + "," + bins[3].ToString() + "," + bins[4].ToString();
-
 
                     string name = uploadPrefix + "motion " + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss_fff") + "_" + motionoutput;
 
@@ -326,16 +321,12 @@ namespace PhoneXamlDirect3DApp1
 
                 case "TrainingPos":
                     posRecordings.Clear();
-                    pendingTrainingMode = POSITIVETRAINING;
-                    //trainingMode = POSITIVETRAINING;
-
+                    pendingTrainingMode = POSITIVETRAINING; //Sets pending flag so training is started after a delay
                     break;
 
                 case "TrainingNeg":
                     negRecordings.Clear();
-                    pendingTrainingMode = NEGATIVETRAINING;
-                    //trainingMode = NEGATIVETRAINING;
-
+                    pendingTrainingMode = NEGATIVETRAINING; //Sets pending flag so training is started after a delay
                     break;
             }
         }
@@ -347,12 +338,11 @@ namespace PhoneXamlDirect3DApp1
             {
                
                 case "Motion":
-                    //motionCaptureEnabled = true;
-                    pendingCaptureMode = true;
+                    pendingCaptureMode = true; //Sets pending flag so capture is started after a delay
                     break;
 
                 case "MotionOff":
-                    motionCaptureEnabled = false;
+                    motionCaptureEnabled = false; //Sets pending flag so capture is started after a delay
                     break;
             }
         }
@@ -416,10 +406,10 @@ namespace PhoneXamlDirect3DApp1
             //////////////////////////////////////////////////////////////////////////////
 
             //Capture training data
-            //Capture a certain SAMPLESTOTRAIN samples
+            //Capture a certain number of samples = SAMPLESTOTRAIN
             if (negRecordings.Count >= SAMPLESTOTRAIN && trainingMode == NEGATIVETRAINING)
             {
-                //training done
+                //training done, reset training mode
                 trainingMode = NOTTRAINING;
                 Dispatcher.BeginInvoke(() =>
                 {
@@ -428,7 +418,7 @@ namespace PhoneXamlDirect3DApp1
             }
             else if (posRecordings.Count >= SAMPLESTOTRAIN && trainingMode == POSITIVETRAINING)
             {
-                //training done
+                //training done, reset training mode
                 trainingMode = NOTTRAINING;
                 Dispatcher.BeginInvoke(() =>
                 {
@@ -458,7 +448,6 @@ namespace PhoneXamlDirect3DApp1
                 float[] bins = m_d3dInterop.MotionBins();
                 string motionoutput = bins[0].ToString() + ", " + bins[1].ToString() + ", " + bins[2].ToString() + "\n" + bins[3].ToString() + ", " + bins[4].ToString();
                 MotionOutput.Text = motionoutput;
-                //MotionOutput.Text = m_d3dInterop.LowMotionBins().ToString();
                 LearnedOutput.Text = m_d3dInterop.MotionStatus().ToString();
 
             }
@@ -466,12 +455,6 @@ namespace PhoneXamlDirect3DApp1
             {
                 MemoryTextBlock.Text = ex.Message;
             }
-
-            //if (ImageThresh != null)    //update text
-            //{
-            //    ImageThresVal.Text = ((int)ImageThresh.Value).ToString();
-
-            //}
 
             if (motionCaptureEnabled)
             {
@@ -524,7 +507,7 @@ namespace PhoneXamlDirect3DApp1
 
 
         #region Machine Learning Stuffs
-        // This is what starts all the fun!
+        // Shamelessly stolen from example
         private void learnButton_Click(object sender, RoutedEventArgs e)
         {
             learnOutput.Text = "Learning";
@@ -555,7 +538,7 @@ namespace PhoneXamlDirect3DApp1
             m_d3dInterop.resumeVideo();
         }
 
-        // This computes a feature vector out of some floating point data
+        // This computes a feature vector out of some a single float (deprecated)
         double[] computeFeatureVector(float data)
         { 
             //floating point data is number of bins over threshold
@@ -565,7 +548,7 @@ namespace PhoneXamlDirect3DApp1
             return featureVec;
         }
 
-        // This computes a feature vector out of some floating point data
+        // This computes a feature vector out a histogram (bottom 5 bins)
         double[] computeFeatureVector(float[] data)
         {
             //floating point data is number of bins over threshold
@@ -686,7 +669,6 @@ namespace PhoneXamlDirect3DApp1
 
             try
             {
-                //LiveOperationResult uploadOperation = await client.BackgroundUploadAsync("me/skydrive", new Uri("/shared/transfers/" + strSaveName, UriKind.Relative), OverwriteOption.Overwrite);
                 char[] temp = strSaveName.ToCharArray();
                 if (temp[temp.Length - 1] == 't')
                 {
@@ -747,7 +729,6 @@ namespace PhoneXamlDirect3DApp1
             }
 
             // Store the audio data in a stream
-            //stream.Write(buffer, 0, buffer.Length);
             stream.Write(tempArray, 0, tempArray.Length);
 
         }
@@ -890,10 +871,8 @@ namespace PhoneXamlDirect3DApp1
                     try
                     {
                         uploadComplete = false;
-
-                        //LiveOperationResult uploadOperation = await client.BackgroundUploadAsync("me/skydrive", new Uri("/shared/transfers/" + strSaveName, UriKind.Relative), OverwriteOption.Overwrite);
                         LiveOperationResult uploadOperation = await this.client.UploadAsync(audioID, strSaveName, fileStream, OverwriteOption.Overwrite);
-                        //LiveOperationResult uploadResult = await uploadOperation.StartAsync();
+                        
                         if (uploadOperation.Result != null)
                         {
                             uploadComplete = true;
@@ -924,48 +903,31 @@ namespace PhoneXamlDirect3DApp1
             try
             {
 
-                //LiveOperationResult operationResult = await this.client.PostAsync("me/skydrive", folderData);
-
                 LiveOperationResult operationResult = await this.client.GetAsync("me/skydrive/files?filter=folders");
-
                 dynamic result = operationResult.Result;
-
                 List<object> folder = result.data;
-
                 bool AudioNameExists = false;
-
                 bool PictureNameExists = false;
-
                 bool TranscriptNameExists = false;
-
                 foreach (dynamic item in folder)
                 {
 
                     if (item.name == "CreeperAudio")
                     {
-
                         audioID = item.id as string;
-
                         AudioNameExists = true;
-
                     }
 
                     if (item.name == "CreeperPicture")
                     {
-
                         pictureID = item.id as string;
-
                         PictureNameExists = true;
-
                     }
 
                     if (item.name == "CreeperTranscript")
                     {
-
                         transcriptID = item.id as string;
-
                         TranscriptNameExists = true;
-
                     }
 
                 }

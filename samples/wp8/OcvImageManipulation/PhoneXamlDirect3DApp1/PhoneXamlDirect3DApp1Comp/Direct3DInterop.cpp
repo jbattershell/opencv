@@ -68,6 +68,7 @@ namespace PhoneXamlDirect3DApp1Comp
         , m_frontMinus2Frame(nullptr)
         , m_diffFrame(nullptr)
 		, pauseFrames (false)
+		, viewFinderOn (false)
     {
 		this->imageThreshold = 300000;
 		this->pixelThreshold = 40;
@@ -79,12 +80,11 @@ namespace PhoneXamlDirect3DApp1Comp
 		//bins = 15;
     }
 
-    bool Direct3DInterop::SwapFrames()
+    bool Direct3DInterop::SwapFrames()	//swaps around pointers to the last X frames that have passed through
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if(m_backFrame != nullptr && !this->frameProcessingInProgress && !this->frameRenderingInProgress)	//If not still processing frame
         {
-			
             //std::swap(m_frontMinus2Frame, m_frontMinus1Frame);	//oldest data goes to m_frontMinus2Frame
             std::swap(m_frontMinus1Frame, m_frontFrame);		//next oldest goes to m_frontMinus1Frame
             std::swap(m_backFrame, m_frontFrame);				//newest data goes to frontFrame
@@ -121,59 +121,20 @@ namespace PhoneXamlDirect3DApp1Comp
 			if (m_renderer)
 			{
 				cv::Mat* mat = m_frontFrame.get();	//load in newest data
-				//cv::Mat* matOld = m_frontMinus1Frame.get();	//load in 1 frame old data
-				//cv::Mat* matForRender = m_frontMinus2Frame.get();	//load in 2 frame old data
-				//cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
 				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
-
-						//if (
-						//this->startProc();	//start processing frame so it is available
 
 						if(m_getBackground)
 						{
 							memcpy(matback->data, mat->data, 4*mat->cols * mat->rows);
 							m_getBackground = false;
 						}
-						//ApplyBlurFilter(mat);
-						//diffImg(matOlder, matOld, mat, matdiff);	//looks for motion in the last three frames
-						this->ProcessThisFrame(matback,mat,mat);
 
-
-						//Move into Processing Thread
-						////////////////////////////////////////////////
-						//diffImg(matback, mat, matdiff);	//looks for motion vs background frame
-
-						//ShiftBackground(mat,matback,0.5f);	//Move the background image a little closer to the current image
-						//
-						//ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
-						//const int bins = 15;
-						//float binvals[bins];
-						//GetHist(matdiff,bins,binvals);
-
-						//bottombins = binvals[0];
-						//////////////////////////////////////////////////
-
-						//////////////////////////////////////////////
-						////For machine learning capture mode
-						//	this->OnFrameReady(bottombins);
-						//
-						//	//Send picture to C# code to save
-						//	if (m_captureFrame)
-						//	{
-						//		auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
-						//		this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
-						//	}
-						//
-						//////////////////////////////////////////////
-
-						//pixelThreshold=255/bins;
-						//threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
-						//m_renderer->CreateTextureFromByte(matdiff->data, matdiff->cols, matdiff->rows);
+						this->ProcessThisFrame();	//Set flag so other thread processes data
 			}
 		}
     }
 	int Direct3DInterop::GetNumberOfBins()
-	{return this->NUMOFBINS;}	//not sure how to get a const int in my class.  Hardcoding in the meantime...
+	{return this->NUMOFBINS;}
 	
     void Direct3DInterop::SetCapture()
     {this->m_captureFrame=true;}
@@ -192,14 +153,16 @@ namespace PhoneXamlDirect3DApp1Comp
 	void Direct3DInterop::resumeVideo()
 	{this->pauseFrames=false;}
 
+	void Direct3DInterop::viewFinderTurnOn()
+	{this->viewFinderOn=true;}
+	void Direct3DInterop::viewFinderTurnOff()
+	{this->viewFinderOn=false;}
+
 	bool Direct3DInterop::MotionStatus()
 	{return this->motionDetected;}
 	float Direct3DInterop::LowMotionBins()
 	{return this->bottombins;}
 
-	
-	//int Direct3DInterop::GetNumOfBins()
-	//{return this->NUMOFBINS;}
 
 	Platform::Array<float>^ Direct3DInterop::MotionBins()
 	{
@@ -553,28 +516,19 @@ namespace PhoneXamlDirect3DApp1Comp
 				ShiftBackground(mat,matback,0.70f);	//Move the background image a little closer to the current image
 						
 				ApplyGrayFilter(matdiff);	//try only going to grayscale after diff
-				//const int bins = 15;
-				//float binvals[NUMOFBINS];
-				//GetHist(matdiff,bins,binvals);
 
-				
 				GetHist(matdiff,this->NUMOFBINS,this->motionBins);
 
 				this->bottombins = motionBins[0];
 				////////////////////////////////////////////
 				//For machine learning capture mode
-					//this->OnFrameReady(motionBins[1]); 
-					this->OnFrameReady(MotionBins());
+					this->OnFrameReady(MotionBins());	//Pass histogram to C# to plug into model
 						
 					//Send picture to C# code to save
 					if (m_captureFrame)
 					{
 						auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
 						this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
-
-						
-						//auto buff = ref new Platform::Array<int>( (int*) matdiff->data, matdiff->cols * matdiff->rows);
-						//this->OnCaptureFrameReady( buff, matdiff->cols, matdiff->rows );
 					}
 						
 				////////////////////////////////////////////
@@ -582,12 +536,8 @@ namespace PhoneXamlDirect3DApp1Comp
 				pixelThreshold=255/this->NUMOFBINS;
 				threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
 
-				cv::Mat* matForRender = m_frontMinus2Frame.get();	//load in 2 frame old data
-				memcpy(matForRender->data, mat->data, 4*mat->cols * mat->rows);
-
-
-				m_renderer->CreateTextureFromByte(matForRender->data, matForRender->cols, matForRender->rows,&this->frameRenderingInProgress);
-
+				if (viewFinderOn)
+					m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows,&this->frameRenderingInProgress);	//send to viewfinder
 
 				this->frameProcessingInProgress = false;
 
@@ -601,7 +551,7 @@ namespace PhoneXamlDirect3DApp1Comp
 
 	
 		//Pass in the call to trigger a new frame
-		void Direct3DInterop::ProcessThisFrame(cv::Mat* matback, cv::Mat* mat, cv::Mat* matdiff)
+		void Direct3DInterop::ProcessThisFrame()
 		{
 			if(this->frameProcessingInProgress == false)	//check that it's not already working on another frame
 			{
