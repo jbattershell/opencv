@@ -69,8 +69,14 @@
                         <StackPanel Orientation="Horizontal" Height="71">
                             <Button x:Name="ModelLearn" Click="learnButton_Click" Width="126" Content="Learn" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="63" Margin="0,0,234,0">
+                            <TextBlock x:Name="learnOutput" Text="No Learn Started " Width="183"/>
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="71">
-                            <TextBlock x:Name="learnOutput" Text="No Learn Started "/>
+                            <Button x:Name="ViewFinderOn" Width="202" Content="Viewfinder On" Click="ViewFinderOn_Click" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="71">
+                            <Button x:Name="ViewFinderOff" Width="206" Content="Viewfinder Off" Click="ViewFinderOff_Click" />
                         </StackPanel>
                     </StackPanel>
                 </Grid>

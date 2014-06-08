@@ -68,7 +68,7 @@ namespace PhoneXamlDirect3DApp1Comp
         , m_frontMinus2Frame(nullptr)
         , m_diffFrame(nullptr)
 		, pauseFrames (false)
-		, viewFinderOn (true)
+		, viewFinderOn (false)
     {
 		this->imageThreshold = 300000;
 		this->pixelThreshold = 40;
@@ -509,6 +509,12 @@ namespace PhoneXamlDirect3DApp1Comp
 				cv::Mat* matdiff = m_diffFrame.get();	//load in newest data
 				cv::Mat* matback = m_backgroundFrame.get();	//load in background data
 
+				//if (m_captureFrame)	//For taking cool demo images
+				//	{
+				//		auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
+				//		this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+				//	}
+
 				diffImg(matback, mat, matdiff);	//looks for motion vs background frame
 
 				ShiftBackground(mat,matback,0.70f);	//Move the background image a little closer to the current image
@@ -527,6 +533,9 @@ namespace PhoneXamlDirect3DApp1Comp
 					{
 						auto buff = ref new Platform::Array<int>( (int*) mat->data, mat->cols * mat->rows);
 						this->OnCaptureFrameReady( buff, mat->cols, mat->rows );
+						
+						//auto buff = ref new Platform::Array<int>( (int*) matdiff->data, matdiff->cols * matdiff->rows);
+						//this->OnCaptureFrameReady( buff, matdiff->cols, matdiff->rows ); //For taking cool demo images
 					}
 						
 				////////////////////////////////////////////

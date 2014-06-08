@@ -320,6 +320,17 @@ namespace PhoneXamlDirect3DApp1
         #endregion
 
         #region Video UI Handlers
+
+        private void ViewFinderOn_Click(object sender, RoutedEventArgs e)
+        {
+            m_d3dInterop.viewFinderTurnOn();
+        }
+
+        private void ViewFinderOff_Click(object sender, RoutedEventArgs e)
+        {
+            m_d3dInterop.viewFinderTurnOff();
+        }
+
         private void Training_Checked(object sender, RoutedEventArgs e)
         { 
             RadioButton rb = sender as RadioButton;
@@ -532,9 +543,15 @@ namespace PhoneXamlDirect3DApp1
         // Shamelessly stolen from example
         private void learnButton_Click(object sender, RoutedEventArgs e)
         {
+            if ((posRecordings.Count == SAMPLESTOTRAIN) && (negRecordings.Count == SAMPLESTOTRAIN)) //only proceed if samples have been captured
+                learnOutput.Text = "Learning";
+            else
+            {
+                learnOutput.Text = "Capture samples first!";
+                return;
+            }
             m_d3dInterop.viewFinderTurnOff();
-            learnOutput.Text = "Learning";
-            
+
             // We're going to assemble all positive and negative feature vectors
             List<double[]> featureVecs = new List<double[]>();
 
