@@ -39,6 +39,8 @@ using System.Windows.Documents;
 using Windows.Storage.Streams;
 
 using Newtonsoft.Json;
+using Windows.System.Display;
+using Windows.Devices.Sensors;
 
 
 namespace PhoneXamlDirect3DApp1
@@ -138,6 +140,7 @@ namespace PhoneXamlDirect3DApp1
 
         // This is our flag as to whether or not we're currently recording
         private bool recording = false;
+        private bool recordingAllowed = false;
         private bool processing = false; 
         private bool loggedIn = false;
         private bool uploadComplete = true;
@@ -150,14 +153,22 @@ namespace PhoneXamlDirect3DApp1
 
         int quietCount = 0;
 
+        private DisplayRequest dispRequest;
         
         //////This is code for google stuff//////////////////////////
         #endregion
 
+        //Create new Accelerometer object
+        private Accelerometer acc = Accelerometer.GetDefault();
+
+        //this is for the accelerometer
+        bool startAccelerometer = false;
+        double initialSetting = 0;
+
         // Constructor
         public MainPage()
         {
-            InitializeComponent();
+            InitializeComponent();  
 
             #region Video Init
 
@@ -197,11 +208,11 @@ namespace PhoneXamlDirect3DApp1
             sio.audioInEvent += sio_audioInEvent;
             //sio.start();
 
-            //load audio files into isolated storage
-            CopyToIsolatedStorage();
-
             #endregion
 
+            //Setup the Accelerometer
+            acc.ReadingChanged += acc_ReadingChanged;
+            acc.ReportInterval = acc.MinimumReportInterval;
         }
 
         #region Video Drawing Hookup
@@ -678,8 +689,6 @@ namespace PhoneXamlDirect3DApp1
         }
         #endregion
 
-
-
         //new version of this function for images
         private async void uploadFile(string strSaveName, Stream fileStream)
         {
@@ -691,19 +700,19 @@ namespace PhoneXamlDirect3DApp1
                 if (temp[temp.Length - 1] == 't')
                 {
                     LiveOperationResult uploadOperation = await this.client.UploadAsync(transcriptID, strSaveName, fileStream, OverwriteOption.Overwrite);
-                    textOutput.Text = "File " + strSaveName + " uploaded";
+                    uploadResultText.Text = "Upload Result: File " + strSaveName + " uploaded";
                 }
                 else
                 {
                     LiveOperationResult uploadOperation = await this.client.UploadAsync(pictureID, strSaveName, fileStream, OverwriteOption.Overwrite);
-                    textOutput.Text = "File " + strSaveName + " uploaded";
+                    uploadResultText.Text = "Upload Result: File " + strSaveName + " uploaded";
                 }
 
             }
 
             catch (Exception ex)
             {
-                textOutput.Text = "Error uploading: " + ex.Message;
+                uploadResultText.Text = "Upload Result: Error uploading: " + ex.Message;
             }
 
         }
@@ -857,7 +866,7 @@ namespace PhoneXamlDirect3DApp1
             {
                 this.client = null;
                 loggedIn = false;
-                textOutput.Text = e.Error != null ? e.Error.ToString() : string.Empty;
+                oneDriveText.Text = e.Error != null ? e.Error.ToString() : string.Empty;
             }
 
         }
@@ -870,13 +879,13 @@ namespace PhoneXamlDirect3DApp1
                 var jsonResult = operationResult.Result as dynamic;
                 string firstName = jsonResult.first_name ?? string.Empty;
                 string lastName = jsonResult.last_name ?? string.Empty;
-                textOutTranscript.Text = "Welcome " + firstName + " " + lastName;
+                oneDriveText.Text = "Signed in as: " + firstName + " " + lastName;
                 loggedIn = true;
                 CreateFolder();
             }
             catch (Exception e)
             {
-                textOutTranscript.Text = e.ToString();
+                oneDriveText.Text = e.ToString();
             }
         }
 
@@ -900,17 +909,15 @@ namespace PhoneXamlDirect3DApp1
                         }
                         Dispatcher.BeginInvoke(() =>
                         {
-                            this.textOutput.Text = "File " + strSaveName + " uploaded";
+                            this.uploadResultText.Text = "Upload Result: File " + strSaveName + " uploaded";
                         });
 
                     }
-
                     catch (Exception ex)
                     {
-
                         Dispatcher.BeginInvoke(() =>
                         {
-                            this.textOutput.Text = "Error uploading photo: " + ex.Message;
+                            this.uploadResultText.Text = "Upload Result: Error uploading photo: " + ex.Message;
                         });
 
                     }
@@ -920,122 +927,68 @@ namespace PhoneXamlDirect3DApp1
 
         private async void CreateFolder()
         {
-
             try
             {
-
                 //LiveOperationResult operationResult = await this.client.PostAsync("me/skydrive", folderData);
-
                 LiveOperationResult operationResult = await this.client.GetAsync("me/skydrive/files?filter=folders");
-
                 dynamic result = operationResult.Result;
-
                 List<object> folder = result.data;
-
                 bool AudioNameExists = false;
-
                 bool PictureNameExists = false;
-
                 bool TranscriptNameExists = false;
-
                 foreach (dynamic item in folder)
                 {
-
                     if (item.name == "CreeperAudio")
                     {
-
                         audioID = item.id as string;
-
-                        AudioNameExists = true;
-
+                       AudioNameExists = true;
                     }
-
                     if (item.name == "CreeperPicture")
                     {
-
                         pictureID = item.id as string;
-
                         PictureNameExists = true;
-
                     }
-
                     if (item.name == "CreeperTranscript")
                     {
-
                         transcriptID = item.id as string;
-
                         TranscriptNameExists = true;
-
                     }
-
                 }
-
                 if (AudioNameExists == false)
                 {
-
                     //create the folder
-
                     var folderData = new Dictionary<string, object>();
-
                     folderData.Add("name", "CreeperAudio");
-
                     operationResult = await this.client.PostAsync("me/skydrive", folderData);
-
                     dynamic result2 = operationResult.Result;
-
                     audioID = result2.id as string;
-
-                    this.textOutput.Text = string.Join(" ", "Created folder:", result2.name, "ID:", result2.id);
-
+                    this.oneDriveText.Text = string.Join(" ", "Created folder:", result2.name, "ID:", result2.id);
                 }
-
                 if (PictureNameExists == false)
                 {
-
                     //create the folder
-
                     var folderData = new Dictionary<string, object>();
-
                     folderData.Add("name", "CreeperPicture");
-
                     operationResult = await this.client.PostAsync("me/skydrive", folderData);
-
                     dynamic result3 = operationResult.Result;
-
                     pictureID = result3.id as string;
-
-                    this.textOutput.Text = string.Join(" ", "Created folder:", result3.name, "ID:", result3.id);
-
+                    this.oneDriveText.Text = string.Join(" ", "Created folder:", result3.name, "ID:", result3.id);
                 }
-
-                if (TranscriptNameExists == false)
+               if (TranscriptNameExists == false)
                 {
-
                     //create the folder
-
                     var folderData = new Dictionary<string, object>();
-
                     folderData.Add("name", "CreeperTranscript");
-
                     operationResult = await this.client.PostAsync("me/skydrive", folderData);
-
                     dynamic result4 = operationResult.Result;
-
                     transcriptID = result4.id as string;
-
-                    this.textOutput.Text = string.Join(" ", "Created folder:", result4.name, "ID:", result4.id);
-
+                    this.oneDriveText.Text = string.Join(" ", "Created folder:", result4.name, "ID:", result4.id);
                 }
-
             }
-
             catch (LiveConnectException exception)
             {
-
-                this.textOutput.Text = "Error creating folder: " + exception.Message;
-
+                this.oneDriveText.Text = "Error creating folder: " + exception.Message;
             }
-
         }
         ///////this is the google code part
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -1056,7 +1009,7 @@ namespace PhoneXamlDirect3DApp1
                 recordedAudio.Add(data);
 
                 // If we're reached our maximum recording limit....
-                if (recordedAudio.Count == 10000) //10 sec worth
+                if (recordedAudio.Count == 10000 || recordingAllowed == false) //10 sec worth
                 {
                     // We stop ourselves! :P
                     stopRecording();
@@ -1076,18 +1029,16 @@ namespace PhoneXamlDirect3DApp1
             Complex[] DATA = fftw.fft(data);
 
             //if (this.recording == false && this.processing == false && loggedIn == true && uploadComplete == true)
-            if (this.recording == false && loggedIn == true)
+            if (this.recording == false && loggedIn == true && recordingAllowed == true)
             {
                 for (uint i = binLow; i < binHigh; i++)
                 {
                     if ((DATA[i].real * DATA[i].real + DATA[i].imag * DATA[i].imag) > 60)
                     {
 
-                        playAudio();
-
                         Dispatcher.BeginInvoke(() =>
                         {
-                            textOutput.Text = "Trigger Freq: " + i * 48000 / (uint)data.Length;
+                            //textOutput.Text = "Trigger Freq: " + i * 48000 / (uint)data.Length;
                         });
                         startRecording();
                         break;
@@ -1113,34 +1064,13 @@ namespace PhoneXamlDirect3DApp1
                     quietCount = 0;
                     Dispatcher.BeginInvoke(() =>
                     {
-                        textOutput.Text = "Audio no longer detected";
+                        recordText.Text = "Record Status: Audio no longer detected";
                     });
 
                     stopRecording();
                 }
-
             }
-
         }
-
-        private void playAudio()
-        {
-
-            // Play the audio in a new thread so the UI can update.
-            Thread soundThread = new Thread(new ThreadStart(playSound));
-            soundThread.Start();
-        }
-
-        private void playSound()
-        {
-            // Play audio using SoundEffectInstance so we can monitor it's State 
-            // and update the UI in the dt_Tick handler when it is done playing.         
-            //SoundEffect sound = new SoundEffect(info, microphone.SampleRate, AudioChannels.Mono);
-            SoundEffect sound;
-            //sound = Content.Load<SoundEffect>("Hellooo");
-            //sound.Play();
-        }
-
 
         // This gets called when the button gets pressed while it says "Go"
         private void startRecording()
@@ -1166,7 +1096,7 @@ namespace PhoneXamlDirect3DApp1
             // Do this in a Dispatcher.BeginInvoke since we're not certain which thread is calling this function!
             Dispatcher.BeginInvoke(() =>
             {
-                this.textOutTranscript.Text = "Recording...";
+                this.recordText.Text = "Record Status: Recording...";
 
             });
         }
@@ -1181,7 +1111,7 @@ namespace PhoneXamlDirect3DApp1
 
             Dispatcher.BeginInvoke(() =>
             {
-                this.textOutTranscript.Text = "Uploading File...";
+                this.uploadResultText.Text = "Upload Status: Uploading File...";
             });
             uploadFile();
             //recordedAudio.Clear();
@@ -1191,43 +1121,11 @@ namespace PhoneXamlDirect3DApp1
             // Do this in a Dispatcher.BeginInvoke since we're not certain which thread is calling this function!
             Dispatcher.BeginInvoke(() =>
             {
-                this.textOutput.Text = "Processing...";
+                this.ProcessingText.Text = "Processing Status: Processing...";
                 processData();
             });
 
         }
-
-        private void CopyToIsolatedStorage()
-        {
-            return; //I don't have hello.wav right now
-            using (IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication())
-            {
-                string[] files = new string[] { "Hellooo.wav" };
-
-                foreach (var _fileName in files)
-                {
-                    if (!storage.FileExists(_fileName))
-                    {
-                        string _filePath = "Audio/" + _fileName;
-                        StreamResourceInfo resource = Application.GetResourceStream(new Uri(_filePath, UriKind.Relative));
-
-                        using (IsolatedStorageFileStream file = storage.CreateFile(_fileName))
-                        {
-                            int chunkSize = 4096;
-                            byte[] bytes = new byte[chunkSize];
-                            int byteCount;
-
-                            while ((byteCount = resource.Stream.Read(bytes, 0, chunkSize)) > 0)
-                            {
-                                file.Write(bytes, 0, byteCount);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
 
 
         // This is a utility to take a list of arrays and mash them all together into one large array
@@ -1286,7 +1184,7 @@ namespace PhoneXamlDirect3DApp1
                     foreach (var alternative in result.result[0].alternative)
                     {
                         Run run = new Run();
-                        run.Text = alternative.transcript + "\n\n";
+                        run.Text = "Transcript Result: " + alternative.transcript + "\n\n";
                         byte bg = (byte)(alternative.confidence * 255);
                         run.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 255, bg, bg));
                         textOutTranscript.Inlines.Add(run);
@@ -1304,7 +1202,6 @@ namespace PhoneXamlDirect3DApp1
                             writer = new StreamWriter(new IsolatedStorageFileStream(
                                 strSaveNameTemp, FileMode.CreateNew, store));
 
-                            // Have the writer write "Hello Isolated Storage" to the store.
                             writer.WriteLine(googleText);
 
                             writer.Close();
@@ -1312,7 +1209,7 @@ namespace PhoneXamlDirect3DApp1
                             var fileStreamTemp = store.OpenFile(strSaveNameTemp, FileMode.Open, FileAccess.Read, FileShare.Read);
 
                             uploadFile(strSaveNameTemp, fileStreamTemp);
-                            textOutTranscript.Text = "Transcript Uploaded";
+                            ProcessingText.Text = "Processing Status: Processing Complete";
                             break;
                         }
                     }
@@ -1320,12 +1217,12 @@ namespace PhoneXamlDirect3DApp1
                 }
                 else
                 {
-                    textOutTranscript.Text = "Errored out!";
+                    ProcessingText.Text = "Processing Result: Errored out!";
                 }
             }
             else
             {
-                textOutTranscript.Text = "Google return bad!";
+                ProcessingText.Text = "Processing Result: Google return bad!";
             }
 
             this.processing = false;
@@ -1395,5 +1292,76 @@ namespace PhoneXamlDirect3DApp1
 
 
         #endregion
+
+        private void RecordButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (loggedIn == true)
+            {
+                if (recordingAllowed == false)
+                {
+                    recordingAllowed = true;
+                    RecordButton.Content = "Recording Enabled";
+                    recordText.Text = "Record Status: Recording Enabled";
+                    startAccelerometer = true;
+                }
+                else
+                {
+                    recordingAllowed = false;
+                    RecordButton.Content = "Recording Disabled";
+                    recordText.Text = "Record Status: Recording Disabled";
+                    startAccelerometer = false;
+                    initialSetting = 0;
+                }
+            }
+        }
+
+        void acc_ReadingChanged(Accelerometer sender, AccelerometerReadingChangedEventArgs args)
+        {
+            if (startAccelerometer)
+            {
+                if (initialSetting == 0)
+                {
+                    initialSetting = args.Reading.AccelerationX + args.Reading.AccelerationY;
+                }
+                var disruptDetect = args.Reading.AccelerationX + args.Reading.AccelerationY;
+                if (Math.Abs(initialSetting - disruptDetect) > 0.5)
+                {
+                    DeleteFiles();
+                    Application.Current.Terminate();
+                }
+            }
+        }
+
+        public void DeleteFiles()
+        {
+            try
+            {
+                IsolatedStorageFile isoFile = IsolatedStorageFile.GetUserStoreForApplication();
+
+                String[] dirNames = isoFile.GetDirectoryNames("*");
+                String[] fileNames = isoFile.GetFileNames("*");
+
+                // List the files currently in this Isolated Storage. 
+                // The list represents all users who have personal 
+                // preferences stored for this application. 
+                if (fileNames.Length > 0)
+                {
+                    for (int i = 0; i < fileNames.Length; ++i)
+                    {
+                        // Delete the files.
+                        isoFile.DeleteFile(fileNames[i]);
+                    }
+                    // Confirm that no files remain.
+                    fileNames = isoFile.GetFileNames("*");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+        }
+
+
     }       
 }

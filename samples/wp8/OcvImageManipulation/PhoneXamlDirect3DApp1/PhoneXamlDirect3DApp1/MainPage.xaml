@@ -90,14 +90,16 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel x:Name="MainPanel" Grid.Row="0" Margin="12,17,0,28">
-                        <TextBlock x:Name="ApplicationTitle" Text="OneDrive and Audio Status" Style="{StaticResource PhoneTextNormalStyle}"/>
-                    </StackPanel>
+                    <StackPanel x:Name="MainPanel" Grid.Row="0" Margin="12,17,0,28"/>
                     <Controls:SignInButton HorizontalAlignment="Left" Margin="12,402,0,0" Grid.Row="1" VerticalAlignment="Top" Content="Button" Name="skydrive" Scopes="wl.basic wl.signin wl.offline_access wl.skydrive_update" SessionChanged="skydrive_SessionChanged" ClientId="00000000480D3C22" Height="99"/>
 
 
-                    <TextBlock x:Name="textOutput" HorizontalAlignment="Left" Margin="220,402,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="195" Height="99"/>
-                    <TextBlock x:Name="textOutTranscript" HorizontalAlignment="Left" Margin="0,10,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="163" Width="410"/>
+                    <TextBlock x:Name="uploadResultText" HorizontalAlignment="Left" Margin="0,142,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Upload Status: " VerticalAlignment="Top" Width="410" Height="61"/>
+                    <TextBlock x:Name="textOutTranscript" HorizontalAlignment="Left" Margin="0,208,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Transcript Result: " VerticalAlignment="Top" Height="189" Width="410"/>
+                    <TextBlock x:Name="oneDriveText" HorizontalAlignment="Left" Margin="206,402,0,0" Grid.Row="1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="94" Width="204"/>
+                    <TextBlock x:Name="recordText" HorizontalAlignment="Left" Grid.Row="1" TextWrapping="Wrap" Text="Record Status: " VerticalAlignment="Top" Height="69" Width="410"/>
+                    <TextBlock x:Name="ProcessingText" HorizontalAlignment="Left" Margin="0,69,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Processing Status: " VerticalAlignment="Top" Height="68" Width="410"/>
+                    <RadioButton x:Name="RecordButton" Content="Recording Disabled" HorizontalAlignment="Left" Margin="12,501,0,0" Grid.Row="1" VerticalAlignment="Top" Click="RecordButton_Click"/>
                     <!--ContentPanel - place additional content here-->
 
                 </Grid>
