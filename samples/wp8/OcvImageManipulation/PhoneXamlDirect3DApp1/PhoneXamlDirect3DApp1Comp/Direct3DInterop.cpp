@@ -160,7 +160,7 @@ namespace PhoneXamlDirect3DApp1Comp
 		this->viewFinderOn=false;
 
 		cv::Mat* zeroMat = m_frontMinus2Frame.get();	//load in background data
-		diffImg(zeroMat, zeroMat, zeroMat);	//looks for motion vs background frame
+		diffImg(zeroMat, zeroMat, zeroMat);	//result will be zero everywhere
 		m_renderer->CreateTextureFromByte(zeroMat->data, zeroMat->cols, zeroMat->rows,&this->frameRenderingInProgress);	//send to viewfinder
 	}
 
@@ -190,11 +190,10 @@ namespace PhoneXamlDirect3DApp1Comp
 		const int channels = 0;
 		const float varranges[] = {0, 256};
 		const float* ranges = varranges;
-						
-
+			
 			cv::calcHist(image, nimages, &channels,
 				cv::Mat(), hist, dims, &histSize,
-		&ranges, true, false );
+				&ranges, true, false );
 
 		//put results into array
 		for (int i=0; i<histSize;i++)
