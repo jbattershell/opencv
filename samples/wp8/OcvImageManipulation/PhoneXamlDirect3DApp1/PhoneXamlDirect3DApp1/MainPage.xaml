@@ -50,7 +50,7 @@
                             <TextBlock Text=" MB"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">
-                            <TextBlock Text="Low Motion Count: "/>
+                            <TextBlock Text="Hist Bins 1-5: "/>
                             <TextBlock x:Name="MotionOutput"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Margin="20,0,0,0">

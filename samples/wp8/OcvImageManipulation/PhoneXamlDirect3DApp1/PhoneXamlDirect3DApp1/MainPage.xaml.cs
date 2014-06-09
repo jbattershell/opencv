@@ -52,7 +52,7 @@ namespace PhoneXamlDirect3DApp1
         private DispatcherTimer m_timer;
         MediaLibrary library = new MediaLibrary();
         private bool motionCaptureEnabled;
-        private string uploadPrefix = "Jon_";
+        private string uploadPrefix = "";
         
         private int trainingMode;   //0=not training, 1=positive training, 2=negative training
             const int NOTTRAINING = 0;
