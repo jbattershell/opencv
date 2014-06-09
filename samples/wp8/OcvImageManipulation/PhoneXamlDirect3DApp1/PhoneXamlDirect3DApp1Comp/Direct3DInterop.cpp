@@ -156,7 +156,13 @@ namespace PhoneXamlDirect3DApp1Comp
 	void Direct3DInterop::viewFinderTurnOn()
 	{this->viewFinderOn=true;}
 	void Direct3DInterop::viewFinderTurnOff()
-	{this->viewFinderOn=false;}
+	{
+		this->viewFinderOn=false;
+
+		cv::Mat* zeroMat = m_frontMinus2Frame.get();	//load in background data
+		diffImg(zeroMat, zeroMat, zeroMat);	//looks for motion vs background frame
+		m_renderer->CreateTextureFromByte(zeroMat->data, zeroMat->cols, zeroMat->rows,&this->frameRenderingInProgress);	//send to viewfinder
+	}
 
 	bool Direct3DInterop::MotionStatus()
 	{return this->motionDetected;}
@@ -213,7 +219,7 @@ namespace PhoneXamlDirect3DApp1Comp
 		cv::absdiff(*t2,*t1,intermediateMat);	
 		cv::bitwise_and(*output,intermediateMat,*output);
 
-		ResetTransparency(output);	//only needed when I want to visualize the result
+		//ResetTransparency(output);	//only needed when I want to visualize the result
 	}
 
 	//Computes abs(t0-t1)
@@ -531,12 +537,9 @@ namespace PhoneXamlDirect3DApp1Comp
 						
 				////////////////////////////////////////////
 
-				pixelThreshold=255/this->NUMOFBINS;
-				threshold(*matdiff,*matdiff,pixelThreshold,255,THRESH_BINARY);
-
 				if (viewFinderOn)
 					m_renderer->CreateTextureFromByte(mat->data, mat->cols, mat->rows,&this->frameRenderingInProgress);	//send to viewfinder
-
+					
 				this->frameProcessingInProgress = false;
 
 			}

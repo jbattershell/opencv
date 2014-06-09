@@ -30,15 +30,12 @@
                 </phone:PanoramaItem.RenderTransform>
 
                 <Grid>
-                    <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" Margin="205,412,10,10" />
+                    <DrawingSurface x:Name="DrawingSurface" Loaded="DrawingSurface_Loaded" Margin="199,404,10,10" />
                     <StackPanel Margin="0">
                         <RadioButton x:Name="Motion" Content="Turn On Motion Detector" GroupName="Group1" 
                    Checked="RadioButton_Checked" Height="74"/>
                         <RadioButton x:Name="MotionOff" Content="Turn Off Motion Detector" GroupName="Group1" 
             	Checked="RadioButton_Checked" IsChecked="True"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0" Height="71">
-                            <Button x:Name="Background_Button" Width="216" Content="Set Background" Click="Background_Button_Click" />
-                        </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
                             <TextBlock Text="Memory: "/>
                             <TextBlock x:Name="MemoryTextBlock"/>
@@ -66,11 +63,11 @@
                    Checked="Training_Checked" />
 
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="63" Margin="0,0,10,0">
+                            <TextBlock x:Name="learnOutput" Text="No Learn Started " Width="183"/>
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="71">
                             <Button x:Name="ModelLearn" Click="learnButton_Click" Width="126" Content="Learn" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Height="63" Margin="0,0,234,0">
-                            <TextBlock x:Name="learnOutput" Text="No Learn Started " Width="183"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="71">
                             <Button x:Name="ViewFinderOn" Width="202" Content="Viewfinder On" Click="ViewFinderOn_Click" />
