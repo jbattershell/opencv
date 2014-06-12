@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -42,7 +43,6 @@ using Newtonsoft.Json;
 using Windows.System.Display;
 using Windows.Devices.Sensors;
 
-
 namespace PhoneXamlDirect3DApp1
 {
     public partial class MainPage : PhoneApplicationPage
@@ -82,7 +82,7 @@ namespace PhoneXamlDirect3DApp1
 
 
         #region Audio Classes
-        ///////////this is code for google stuff//////////////////
+
         // These classes made from http://json2csharp.com/
         public class Alternative
         {
@@ -101,24 +101,19 @@ namespace PhoneXamlDirect3DApp1
             public List<Result> result { get; set; }
             public int result_index { get; set; }
         }
-        /// ///////this is code for google stuff///////////////////
+
         #endregion
 
 
         #region Audio Variables
         //this is for C++ FFTW
-        //SoundIO sio = null;
-        AudioTool at = null;
-        
         FFTW fftw = null;
-        //this is for C++ FFTW
 
         private Microphone microphone = Microphone.Default;     // Object representing the physical microphone on the device
         private byte[] buffer;                                  // Dynamic buffer to retrieve audio data from the microphone
         private MemoryStream stream = new MemoryStream();       // Stores the audio data for later playback
         
-
-        // we give our file a filename
+        //Temporary filename
         private string strSaveName;
 
         //Scale the volume
@@ -127,7 +122,6 @@ namespace PhoneXamlDirect3DApp1
         // SkyDrive session
         private LiveConnectClient client;
 
-        //////This is code for google stuff//////////////////////////
         // This is the object we'll record data into
         private libFLAC lf = new libFLAC();
         private SoundIO sio = new SoundIO();
@@ -135,25 +129,29 @@ namespace PhoneXamlDirect3DApp1
         // This is our list of float[] chunks that we're keeping track of
         private List<float[]> recordedAudio = new List<float[]>();
 
-        // This is our flag as to whether or not we're currently recording
+        // These are all our audio flags
         private bool recording = false;
         private bool recordingAllowed = false;
         private bool processing = false; 
         private bool loggedIn = false;
         private bool uploadComplete = true;
 
+        //These are the OneDrive folder ID's
         string audioID;
         string pictureID;
         string transcriptID;
 
+        //This holds the google transcription result
         string googleText;
 
+        //This keeps track of how long no audio has been detected
         int quietCount = 0;
 
         private DisplayRequest dispRequest;
-        
-        //////This is code for google stuff//////////////////////////
+
         #endregion
+
+        #region Misc Variables
 
         //Create new Accelerometer object
         private Accelerometer acc = Accelerometer.GetDefault();
@@ -161,6 +159,8 @@ namespace PhoneXamlDirect3DApp1
         //this is for the accelerometer
         bool startAccelerometer = false;
         double initialSetting = 0;
+
+        #endregion
 
         // Constructor
         public MainPage()
@@ -197,20 +197,17 @@ namespace PhoneXamlDirect3DApp1
             // Event handler for getting audio data when the buffer is full
             microphone.BufferReady += new EventHandler<EventArgs>(microphone_BufferReady);
 
-            //this is for C++ FFTW
-            // Assuming that we don't know in general the number of output channels/samplerate,
-            // we dynamically get those from SoundIO, and then must construct AudioTool in the constructor
-            at = new AudioTool(sio.getOutputNumChannels(), sio.getOutputSampleRate());
-
             // Setup SoundIO right away
             sio.audioInEvent += sio_audioInEvent;
-            //sio.start();
 
             #endregion
 
+            #region Misc Init
             //Setup the Accelerometer
             acc.ReadingChanged += acc_ReadingChanged;
             acc.ReportInterval = acc.MinimumReportInterval;
+
+            #endregion
         }
 
         #region Video Drawing Hookup
@@ -538,7 +535,6 @@ namespace PhoneXamlDirect3DApp1
               return targetStream;
           }
 
-
         #region Machine Learning Stuffs
         // Shamelessly stolen from example
         private void learnButton_Click(object sender, RoutedEventArgs e)
@@ -701,7 +697,7 @@ namespace PhoneXamlDirect3DApp1
         }
         #endregion
 
-        //new version of this function for images
+        //This is overloaded version of the uploadFile function for the transcription results and picture captures
         private async void uploadFile(string strSaveName, Stream fileStream)
         {
 
@@ -729,33 +725,23 @@ namespace PhoneXamlDirect3DApp1
         }
 
         #region Audio Functions
-        
-        /// <summary>
-        /// Updates the XNA FrameworkDispatcher and checks to see if a sound is playing.
-        /// If sound has stopped playing, it updates the UI.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+
+        /// Updates the XNA FrameworkDispatcher
         void dt_Tick(object sender, EventArgs e)
         {
             try { FrameworkDispatcher.Update(); }
             catch { }
         }
 
-        /// <summary>
         /// The Microphone.BufferReady event handler.
         /// Gets the audio data from the microphone and stores it in a buffer,
         /// then writes that buffer to a stream for later playback.
-        /// Any action in this event handler should be quick!
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         void microphone_BufferReady(object sender, EventArgs e)
         {
             // Retrieve audio data
             microphone.GetData(buffer);
 
-            //scale the audio up
+            //Scale the audio up if we want (currently set to 1x)
             var tempArray = buffer;
             for (int i = 0; i < tempArray.Length; i++)
             {
@@ -771,13 +757,14 @@ namespace PhoneXamlDirect3DApp1
 
         }
 
+        //This function saves the audio stream to isolatedStorage
         private void SaveToIsolatedStorage()
         {
             // first, we grab the current apps isolated storage handle
             IsolatedStorageFile isf = IsolatedStorageFile.GetUserStoreForApplication();
 
             // we give our file a filename
-            strSaveName = uploadPrefix+"audio_" + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss") + ".wav";
+            strSaveName = uploadPrefix + "audio_" + DateTime.Now.ToString("yy_MM_dd_hh_mm_ss") + ".wav";
 
             // if that file exists... 
             if (isf.FileExists(strSaveName))
@@ -793,10 +780,11 @@ namespace PhoneXamlDirect3DApp1
 
             isfStream.Write(stream.ToArray(), 0, stream.ToArray().Length);
 
-            // ok, done with isolated storage... so close it
             isfStream.Close();
         }
 
+        //This function updates the wav format header on the audio buffer
+        //This was in the public domain
         public void UpdateWavHeader(Stream stream)
         {
             if (!stream.CanSeek) throw new Exception("Can't seek stream to update wav header");
@@ -814,6 +802,8 @@ namespace PhoneXamlDirect3DApp1
             stream.Seek(oldPos, SeekOrigin.Begin);
         }
 
+        //This is a function which writes the wav header information into the buffer
+        //This was in the public domain
         public void WriteWavHeader(Stream stream, int sampleRate)
         {
             const int bitsPerSample = 16;
@@ -860,6 +850,8 @@ namespace PhoneXamlDirect3DApp1
             stream.Write(BitConverter.GetBytes(0), 0, 4);
         }
 
+        //This handles a session change (login/logout) of the skydrive account
+        //This also sets the background transfer preference for each session to allow 3G and battery uploads
         private void skydrive_SessionChanged(object sender, LiveConnectSessionChangedEventArgs e)
         {
 
@@ -868,9 +860,8 @@ namespace PhoneXamlDirect3DApp1
                 this.client = new LiveConnectClient(e.Session);
                 this.GetAccountInformations();
 
-                // small files but via 3G and on Battery
+                //mos of our files are small so setting to allow 3G and battery
                 this.client.BackgroundTransferPreferences = BackgroundTransferPreferences.AllowCellularAndBattery;
-
             }
             else
             {
@@ -881,6 +872,7 @@ namespace PhoneXamlDirect3DApp1
 
         }
 
+        //Here we get the users account information for OneDrive
         private async void GetAccountInformations()
         {
             try
@@ -899,6 +891,7 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
+        //This function is the non-overloaded version for uploading the audio files to OneDrive
         private async void uploadFile()
         {
 
@@ -910,7 +903,7 @@ namespace PhoneXamlDirect3DApp1
                     {
                         uploadComplete = false;
                         LiveOperationResult uploadOperation = await this.client.UploadAsync(audioID, strSaveName, fileStream, OverwriteOption.Overwrite);
-                        
+
                         if (uploadOperation.Result != null)
                         {
                             uploadComplete = true;
@@ -933,6 +926,8 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
+        //This function checks the users OneDrive for the folders we desire to place our files
+        //If the folders are not present, we create them
         private async void CreateFolder()
         {
             try
@@ -982,7 +977,7 @@ namespace PhoneXamlDirect3DApp1
                     pictureID = result3.id as string;
                     this.oneDriveText.Text = string.Join(" ", "Created folder:", result3.name, "ID:", result3.id);
                 }
-               if (TranscriptNameExists == false)
+                if (TranscriptNameExists == false)
                 {
                     //create the folder
                     var folderData = new Dictionary<string, object>();
@@ -998,16 +993,19 @@ namespace PhoneXamlDirect3DApp1
                 this.oneDriveText.Text = "Error creating folder: " + exception.Message;
             }
         }
-        ///////this is the google code part
+
+        //this just starts up the audio events once you navigate to the audio page
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
-            // Setup SoundIO right away
             sio.audioInEvent += sio_audioInEvent;
             sio.start();
         }
 
+        //This function handles the audio event from the C++
+        //In addition, this function has the FFT code that listens for human speech frequencies
+        //If voice is heard, starts the microphone recording, when voice stops, calls to stop recording
         void sio_audioInEvent(float[] data)
         {
             // Only do something if we're recording right now
@@ -1080,11 +1078,9 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
-        // This gets called when the button gets pressed while it says "Go"
+        // This gets called when human voices frequencies are heard, and starts the microphone recording
         private void startRecording()
         {
-            //m_d3dInterop.pauseVideo();
-
             // Get audio data in 1/2 second chunks
             microphone.BufferDuration = TimeSpan.FromMilliseconds(500);
 
@@ -1109,8 +1105,7 @@ namespace PhoneXamlDirect3DApp1
             });
         }
 
-        // This gets called when the button gets pressed while it says "Stop" or when we reach
-        // our maximum buffer amount (set to 10 seconds right now)
+        // This gets called when we reach our buffer length, human voices are no longer heard or recording is disabled
         private void stopRecording()
         {
             microphone.Stop();
@@ -1134,7 +1129,6 @@ namespace PhoneXamlDirect3DApp1
             });
 
         }
-
 
         // This is a utility to take a list of arrays and mash them all together into one large array
         private T[] flattenList<T>(List<T[]> list)
@@ -1163,6 +1157,8 @@ namespace PhoneXamlDirect3DApp1
             return ret;
         }
 
+        //This functions handles google transcription results
+        //This function also presents the results to the user and decides when to save a result for upload
         private async void processData()
         {
             this.processing = true;
@@ -1179,7 +1175,6 @@ namespace PhoneXamlDirect3DApp1
 
             // Upload it to the server and get a response!
             RecognitionResult result = await recognizeSpeech(flacData, sio.getInputSampleRate());
-
 
             if (result.result != null)
             {
@@ -1237,6 +1232,7 @@ namespace PhoneXamlDirect3DApp1
 
         }
 
+        //This function connects to the google transcription services and makes magic happen
         private async Task<RecognitionResult> recognizeSpeech(byte[] flacData, uint sampleRate)
         {
             try
@@ -1298,9 +1294,11 @@ namespace PhoneXamlDirect3DApp1
             return new RecognitionResult();
         }
 
-
         #endregion
 
+        #region Misc Functions
+
+        //This handles the recording enabled / recording disabled button
         private void RecordButton_Click(object sender, RoutedEventArgs e)
         {
             if (loggedIn == true)
@@ -1323,6 +1321,7 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
+        //This handles the accelerometer code, for checking if the phone is disturbed once setup
         void acc_ReadingChanged(Accelerometer sender, AccelerometerReadingChangedEventArgs args)
         {
             if (startAccelerometer)
@@ -1340,6 +1339,7 @@ namespace PhoneXamlDirect3DApp1
             }
         }
 
+        //This gets called by the accelerometer function, and deletes all isolated storage files and terminates the program
         public void DeleteFiles()
         {
             try
@@ -1370,6 +1370,7 @@ namespace PhoneXamlDirect3DApp1
 
         }
 
+        #endregion
 
-    }       
+    }
 }
